@@ -26,6 +26,9 @@ function Studio() {
   const [view, setView] = useState<View>("dashboard");
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
   const [selectionText, setSelectionText] = useState("");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
 
   useEffect(() => {
     if (!activeChapterId && s.state.chapters[0]) {
