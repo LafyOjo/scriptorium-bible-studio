@@ -5,6 +5,9 @@ import Foundation
 final class SBCollection: NSManagedObject {
     @NSManaged var id: String
     @NSManaged var name: String
+    @NSManaged var orderIndex: Int64
+    @NSManaged var createdAt: Date?
+    @NSManaged var updatedAt: Date?
     @NSManaged var books: NSSet?
 }
 
@@ -30,6 +33,8 @@ final class SBBook: NSManagedObject {
     @NSManaged var name: String
     @NSManaged var testament: String
     @NSManaged var orderIndex: Int64
+    @NSManaged var createdAt: Date?
+    @NSManaged var updatedAt: Date?
     @NSManaged var collection: SBCollection?
     @NSManaged var chapters: NSSet?
     @NSManaged var bookmarks: NSSet?
@@ -60,11 +65,13 @@ final class SBChapter: NSManagedObject {
     @NSManaged var id: String
     @NSManaged var number: Int64
     @NSManaged var title: String
+    @NSManaged var attributedData: Data?
     @NSManaged var contentData: Data?
     @NSManaged var plainText: String
     @NSManaged var status: String
     @NSManaged var tags: String
     @NSManaged var highlightThemes: String
+    @NSManaged var createdAt: Date?
     @NSManaged var updatedAt: Date
     @NSManaged var book: SBBook?
     @NSManaged var notes: NSSet?
@@ -77,7 +84,12 @@ extension SBChapter {
     }
 
     var statusValue: ChapterStatus {
-        ChapterStatus(rawValue: status) ?? .notStarted
+        switch status {
+        case "not-started": return .notStarted
+        case "revised": return .revising
+        case "complete": return .final
+        default: return ChapterStatus(rawValue: status) ?? .notStarted
+        }
     }
 
     var tagArray: [String] {
@@ -107,10 +119,14 @@ extension SBChapter {
 @objc(SBNote)
 final class SBNote: NSManagedObject {
     @NSManaged var id: String
+    @NSManaged var body: String?
     @NSManaged var text: String
     @NSManaged var excerpt: String
     @NSManaged var theme: String?
+    @NSManaged var rangeLocation: Int64
+    @NSManaged var rangeLength: Int64
     @NSManaged var createdAt: Date
+    @NSManaged var updatedAt: Date?
     @NSManaged var chapter: SBChapter?
 }
 
@@ -128,9 +144,13 @@ extension SBNote {
 @objc(SBBookmark)
 final class SBBookmark: NSManagedObject {
     @NSManaged var id: String
+    @NSManaged var chapterID: String?
     @NSManaged var label: String
+    @NSManaged var snippet: String?
     @NSManaged var passage: String?
+    @NSManaged var location: Int64
     @NSManaged var createdAt: Date
+    @NSManaged var updatedAt: Date?
     @NSManaged var book: SBBook?
     @NSManaged var chapter: SBChapter?
 }
@@ -144,12 +164,18 @@ extension SBBookmark {
 @objc(SBAppSettings)
 final class SBAppSettings: NSManagedObject {
     @NSManaged var id: String
+    @NSManaged var editorFontName: String?
     @NSManaged var fontName: String
+    @NSManaged var readerFontSize: Double
     @NSManaged var fontSize: Double
     @NSManaged var lineSpacing: Double
     @NSManaged var defaultBold: Bool
     @NSManaged var defaultItalic: Bool
     @NSManaged var defaultUnderline: Bool
+    @NSManaged var readAloudRate: Double
+    @NSManaged var theme: String?
+    @NSManaged var createdAt: Date?
+    @NSManaged var updatedAt: Date?
 }
 
 extension SBAppSettings {

@@ -2,6 +2,7 @@ import CoreData
 import SwiftUI
 
 struct InspectorView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.managedObjectContext) private var viewContext
 
     let chapter: SBChapter?
@@ -13,13 +14,7 @@ struct InspectorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("Inspector", selection: $tab) {
-                ForEach(InspectorTab.allCases) { tab in
-                    Label(tab.title, systemImage: tab.systemImage).tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding()
+            inspectorPicker
 
             Divider()
 
@@ -37,6 +32,30 @@ struct InspectorView: View {
             }
         }
         .navigationTitle("Inspector")
+    }
+
+    @ViewBuilder
+    private var inspectorPicker: some View {
+        if horizontalSizeClass == .compact {
+            Picker("Inspector", selection: $tab) {
+                ForEach(InspectorTab.allCases) { tab in
+                    Label(tab.title, systemImage: tab.systemImage).tag(tab)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(.bar)
+        } else {
+            Picker("Inspector", selection: $tab) {
+                ForEach(InspectorTab.allCases) { tab in
+                    Label(tab.title, systemImage: tab.systemImage).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding()
+            .background(.bar)
+        }
     }
 }
 
@@ -230,24 +249,9 @@ private struct BookmarksPane: View {
                                 .foregroundStyle(.secondary)
                                 .textCase(.uppercase)
 
-                            HStack {
-                                Button("Book") {
-                                    ScriptoriumActions.addBookmark(book: book, chapter: nil, passage: nil, context: viewContext)
-                                }
-                                .buttonStyle(.bordered)
-
-                                if let chapter {
-                                    Button("Chapter") {
-                                        ScriptoriumActions.addBookmark(book: book, chapter: chapter, passage: nil, context: viewContext)
-                                    }
-                                    .buttonStyle(.bordered)
-
-                                    Button("Passage") {
-                                        ScriptoriumActions.addBookmark(book: book, chapter: chapter, passage: selectedText, context: viewContext)
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .disabled(selectedText.isEmpty)
-                                }
+                            ViewThatFits(in: .horizontal) {
+                                bookmarkButtons(book: book, chapter: chapter, stacked: false)
+                                bookmarkButtons(book: book, chapter: chapter, stacked: true)
                             }
                         }
                     }
@@ -292,6 +296,46 @@ private struct BookmarksPane: View {
             }
             .padding()
         }
+    }
+
+    @ViewBuilder
+    private func bookmarkButtons(book: SBBook, chapter: SBChapter?, stacked: Bool) -> some View {
+        let layout = stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+        layout {
+            bookmarkBookButton(book: book)
+
+            if let chapter {
+                bookmarkChapterButton(book: book, chapter: chapter)
+                bookmarkPassageButton(book: book, chapter: chapter)
+            }
+        }
+    }
+
+    private func bookmarkBookButton(book: SBBook) -> some View {
+        Button("Book") {
+            ScriptoriumActions.addBookmark(book: book, chapter: nil, passage: nil, context: viewContext)
+        }
+        .buttonStyle(.bordered)
+    }
+
+    private func bookmarkChapterButton(book: SBBook, chapter: SBChapter) -> some View {
+        Button("Chapter") {
+            ScriptoriumActions.addBookmark(book: book, chapter: chapter, passage: nil, context: viewContext)
+        }
+        .buttonStyle(.bordered)
+    }
+
+    private func bookmarkPassageButton(book: SBBook, chapter: SBChapter) -> some View {
+        Button("Passage") {
+            ScriptoriumActions.addBookmark(
+                book: book,
+                chapter: chapter,
+                passage: selectedText,
+                context: viewContext
+            )
+        }
+        .buttonStyle(.bordered)
+        .disabled(selectedText.isEmpty)
     }
 }
 

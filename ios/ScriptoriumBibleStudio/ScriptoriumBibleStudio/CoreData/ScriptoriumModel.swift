@@ -8,6 +8,9 @@ enum ScriptoriumModel {
         let collection = entity("SBCollection", SBCollection.self, [
             attribute("id", .stringAttributeType),
             attribute("name", .stringAttributeType),
+            attribute("orderIndex", .integer64AttributeType, defaultValue: 0),
+            attribute("createdAt", .dateAttributeType, optional: true),
+            attribute("updatedAt", .dateAttributeType, optional: true),
         ])
 
         let book = entity("SBBook", SBBook.self, [
@@ -15,43 +18,61 @@ enum ScriptoriumModel {
             attribute("name", .stringAttributeType),
             attribute("testament", .stringAttributeType),
             attribute("orderIndex", .integer64AttributeType),
+            attribute("createdAt", .dateAttributeType, optional: true),
+            attribute("updatedAt", .dateAttributeType, optional: true),
         ])
 
         let chapter = entity("SBChapter", SBChapter.self, [
             attribute("id", .stringAttributeType),
             attribute("number", .integer64AttributeType),
             attribute("title", .stringAttributeType),
+            attribute("attributedData", .binaryDataAttributeType, optional: true, allowsExternalBinaryDataStorage: true),
             attribute("contentData", .binaryDataAttributeType, optional: true, allowsExternalBinaryDataStorage: true),
             attribute("plainText", .stringAttributeType),
             attribute("status", .stringAttributeType),
             attribute("tags", .stringAttributeType),
             attribute("highlightThemes", .stringAttributeType),
+            attribute("createdAt", .dateAttributeType, optional: true),
             attribute("updatedAt", .dateAttributeType),
         ])
 
         let note = entity("SBNote", SBNote.self, [
             attribute("id", .stringAttributeType),
+            attribute("body", .stringAttributeType, optional: true),
             attribute("text", .stringAttributeType),
             attribute("excerpt", .stringAttributeType),
             attribute("theme", .stringAttributeType, optional: true),
+            attribute("rangeLocation", .integer64AttributeType, defaultValue: 0),
+            attribute("rangeLength", .integer64AttributeType, defaultValue: 0),
             attribute("createdAt", .dateAttributeType),
+            attribute("updatedAt", .dateAttributeType, optional: true),
         ])
 
         let bookmark = entity("SBBookmark", SBBookmark.self, [
             attribute("id", .stringAttributeType),
+            attribute("chapterID", .stringAttributeType, optional: true),
             attribute("label", .stringAttributeType),
+            attribute("snippet", .stringAttributeType, optional: true),
             attribute("passage", .stringAttributeType, optional: true),
+            attribute("location", .integer64AttributeType, defaultValue: 0),
             attribute("createdAt", .dateAttributeType),
+            attribute("updatedAt", .dateAttributeType, optional: true),
         ])
 
         let settings = entity("SBAppSettings", SBAppSettings.self, [
             attribute("id", .stringAttributeType),
+            attribute("editorFontName", .stringAttributeType, optional: true),
             attribute("fontName", .stringAttributeType),
+            attribute("readerFontSize", .doubleAttributeType, defaultValue: 19),
             attribute("fontSize", .doubleAttributeType),
             attribute("lineSpacing", .doubleAttributeType),
             attribute("defaultBold", .booleanAttributeType),
             attribute("defaultItalic", .booleanAttributeType),
             attribute("defaultUnderline", .booleanAttributeType),
+            attribute("readAloudRate", .doubleAttributeType, defaultValue: 0.48),
+            attribute("theme", .stringAttributeType, optional: true),
+            attribute("createdAt", .dateAttributeType, optional: true),
+            attribute("updatedAt", .dateAttributeType, optional: true),
         ])
 
         let collectionBooks = relationship("books", destination: book, toMany: true, deleteRule: .nullifyDeleteRule)
@@ -104,13 +125,15 @@ enum ScriptoriumModel {
         _ name: String,
         _ type: NSAttributeType,
         optional: Bool = false,
-        allowsExternalBinaryDataStorage: Bool = false
+        allowsExternalBinaryDataStorage: Bool = false,
+        defaultValue: Any? = nil
     ) -> NSAttributeDescription {
         let description = NSAttributeDescription()
         description.name = name
         description.attributeType = type
         description.isOptional = optional
         description.allowsExternalBinaryDataStorage = allowsExternalBinaryDataStorage
+        description.defaultValue = defaultValue
         return description
     }
 

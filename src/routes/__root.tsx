@@ -78,10 +78,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Scriptorium Bible Studio" },
-      { name: "description", content: "A premium authoring, annotation and reading studio for writing your own version of the Bible." },
+      {
+        name: "description",
+        content:
+          "A premium authoring, annotation and reading studio for writing your own version of the Bible.",
+      },
       { name: "author", content: "Scriptorium" },
       { property: "og:title", content: "Scriptorium Bible Studio" },
-      { property: "og:description", content: "A private manuscript studio for writing, annotating and publishing your own Bible." },
+      {
+        property: "og:description",
+        content:
+          "A private manuscript studio for writing, annotating and publishing your own Bible.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

@@ -16,7 +16,7 @@ enum AttributedContent {
             string: sectionTitle.uppercased() + "\n\n",
             attributes: [
                 .font: displayFont(size: 18, weight: .semibold),
-                .foregroundColor: UIColor(red: 0.60, green: 0.16, blue: 0.18, alpha: 1),
+                .foregroundColor: SBTheme.uiCrimson,
                 .kern: 1.2,
                 .paragraphStyle: sectionParagraph,
             ]
@@ -74,7 +74,7 @@ enum AttributedContent {
         paragraph.paragraphSpacing = 10
 
         var font = editorFont(
-            name: settings?.fontName ?? "system-serif",
+            name: settings?.fontName ?? SBTheme.FontName.body,
             size: settings?.fontSize ?? 19,
             bold: settings?.defaultBold ?? false,
             italic: settings?.defaultItalic ?? false
@@ -86,7 +86,7 @@ enum AttributedContent {
 
         var attributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: UIColor.label,
+            .foregroundColor: SBTheme.uiInk,
             .paragraphStyle: paragraph,
         ]
 
@@ -102,17 +102,14 @@ enum AttributedContent {
             string: "\(number) ",
             attributes: [
                 .font: displayFont(size: 12, weight: .bold),
-                .foregroundColor: UIColor(red: 0.60, green: 0.16, blue: 0.18, alpha: 1),
+                .foregroundColor: SBTheme.uiGold,
                 .baselineOffset: 7,
             ]
         )
     }
 
     static func displayFont(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
-        if let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .headline).withDesign(.serif) {
-            return UIFont.systemFont(ofSize: size, weight: weight).withDesign(descriptor)
-        }
-        return UIFont.systemFont(ofSize: size, weight: weight)
+        SBTheme.displayUIFont(size: size, weight: weight)
     }
 
     static func editorFont(name: String, size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
@@ -120,8 +117,14 @@ enum AttributedContent {
         if name == "system-serif" {
             let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body).withDesign(.serif)
             base = UIFont(descriptor: descriptor ?? .preferredFontDescriptor(withTextStyle: .body), size: size)
+        } else if name == SBTheme.FontName.body {
+            base = SBTheme.bodyUIFont(size: size)
+        } else if name == SBTheme.FontName.display {
+            base = SBTheme.displayUIFont(size: size)
+        } else if name == SBTheme.FontName.ui {
+            base = SBTheme.uiUIFont(size: size)
         } else {
-            base = UIFont(name: name, size: size) ?? UIFont.systemFont(ofSize: size)
+            base = UIFont(name: name, size: size) ?? SBTheme.bodyUIFont(size: size)
         }
 
         var traits = base.fontDescriptor.symbolicTraits

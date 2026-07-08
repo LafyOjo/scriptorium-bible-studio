@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { BookOpen, Bookmark, Clock, Feather, PenLine, ScrollText } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { ScriptoriumState } from "@/lib/scriptorium/store";
 import { countWords } from "@/lib/scriptorium/store";
 import { STATUS_META } from "@/lib/scriptorium/types";
@@ -14,7 +15,10 @@ type Props = {
 export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props) {
   const totalBooks = state.books.length;
   const totalChapters = state.chapters.length;
-  const totalWords = useMemo(() => state.chapters.reduce((a, c) => a + countWords(c.html), 0), [state.chapters]);
+  const totalWords = useMemo(
+    () => state.chapters.reduce((a, c) => a + countWords(c.html), 0),
+    [state.chapters],
+  );
   const complete = state.chapters.filter((c) => c.status === "complete").length;
   const progress = totalChapters ? Math.round((complete / totalChapters) * 100) : 0;
   const recent = [...state.chapters].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
@@ -25,7 +29,9 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
     <div className="flex-1 overflow-auto">
       <div className="mx-auto max-w-6xl p-8 space-y-8">
         <header className="text-center">
-          <div className="font-display text-[10px] tracking-[0.5em] text-oxblood uppercase">Author's Study</div>
+          <div className="font-display text-[10px] tracking-[0.5em] text-oxblood uppercase">
+            Author's Study
+          </div>
           <h1 className="mt-2 font-serif text-5xl text-primary">The Scriptorium</h1>
           <div className="gold-divider mt-4 mx-auto max-w-md" />
           <p className="mt-4 text-sm italic text-muted-foreground">
@@ -48,9 +54,12 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
             </div>
             {last && book ? (
               <>
-                <div className="mt-3 font-serif text-2xl text-primary">{book.name} · {last.number}. {last.title}</div>
+                <div className="mt-3 font-serif text-2xl text-primary">
+                  {book.name} · {last.number}. {last.title}
+                </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {countWords(last.html)} words · {STATUS_META[last.status].label} · edited {new Date(last.updatedAt).toLocaleDateString()}
+                  {countWords(last.html)} words · {STATUS_META[last.status].label} · edited{" "}
+                  {new Date(last.updatedAt).toLocaleDateString()}
                 </div>
                 <button
                   onClick={() => onContinue(last.id)}
@@ -60,7 +69,9 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
                 </button>
               </>
             ) : (
-              <div className="mt-3 text-sm italic text-muted-foreground">Begin your first chapter.</div>
+              <div className="mt-3 text-sm italic text-muted-foreground">
+                Begin your first chapter.
+              </div>
             )}
           </Card>
 
@@ -70,7 +81,9 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
               <div className="font-display text-xs tracking-widest uppercase">Reader Mode</div>
             </div>
             <div className="mt-3 font-serif text-2xl text-primary">Read your Bible</div>
-            <p className="mt-1 text-xs text-muted-foreground">Preview your work as a finished manuscript, with read-aloud.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Preview your work as a finished manuscript, with read-aloud.
+            </p>
             <button
               onClick={() => last && onReader(last.id)}
               className="mt-4 inline-flex items-center gap-2 rounded-md border border-gold bg-gold-soft/40 px-4 py-2 text-sm text-primary hover:bg-gold-soft/70"
@@ -82,11 +95,18 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
 
         <section>
           <div className="mb-2 flex items-center justify-between">
-            <div className="font-display text-xs tracking-widest uppercase text-muted-foreground">Writing Progress</div>
-            <div className="text-xs text-muted-foreground">{complete}/{totalChapters} complete</div>
+            <div className="font-display text-xs tracking-widest uppercase text-muted-foreground">
+              Writing Progress
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {complete}/{totalChapters} complete
+            </div>
           </div>
           <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-gold-soft to-gold" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full bg-gradient-to-r from-gold-soft to-gold"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </section>
 
@@ -109,7 +129,10 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
                   </div>
                   <div className="mt-1 font-serif text-lg text-primary">{c.title}</div>
                   <div className="mt-2 flex items-center gap-2 text-[11px]">
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: STATUS_META[c.status].color }} />
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: STATUS_META[c.status].color }}
+                    />
                     <span className="text-muted-foreground">{STATUS_META[c.status].label}</span>
                     <span className="ml-auto text-muted-foreground">{countWords(c.html)}w</span>
                   </div>
@@ -129,7 +152,11 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
               {state.bookmarks.slice(0, 6).map((b) => (
                 <li key={b.id} className="rounded-md border border-border bg-ivory p-3 text-sm">
                   <div className="font-serif text-primary">{b.label}</div>
-                  {b.passage && <div className="text-xs italic text-ink/70 mt-0.5 line-clamp-2">“{b.passage}”</div>}
+                  {b.passage && (
+                    <div className="text-xs italic text-ink/70 mt-0.5 line-clamp-2">
+                      “{b.passage}”
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -137,7 +164,10 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
         )}
 
         <div className="text-center">
-          <button onClick={onOpenLibrary} className="text-xs text-muted-foreground hover:text-primary underline underline-offset-4">
+          <button
+            onClick={onOpenLibrary}
+            className="text-xs text-muted-foreground hover:text-primary underline underline-offset-4"
+          >
             Browse the full library →
           </button>
         </div>
@@ -146,7 +176,15 @@ export function Dashboard({ state, onContinue, onReader, onOpenLibrary }: Props)
   );
 }
 
-function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number | string;
+}) {
   return (
     <div className="rounded-xl p-4 parchment-panel">
       <div className="flex items-center gap-2">

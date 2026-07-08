@@ -36,7 +36,7 @@ enum ExportService {
     static func chapterURL(chapter: SBChapter, book: SBBook?, kind: ExportKind) throws -> URL {
         let base = safeFilename("\(book?.name ?? "chapter")-\(chapter.number)-\(chapter.title)")
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(base).\(fileExtension(for: kind))")
-        let attributed = AttributedContent.fromRTFData(chapter.contentData)
+        let attributed = AttributedContent.fromRTFData(chapter.attributedData ?? chapter.contentData)
 
         switch kind {
         case .text:
@@ -57,7 +57,7 @@ enum ExportService {
                 status: chapter.status,
                 tags: chapter.tagArray,
                 plainText: chapter.plainText,
-                rtfBase64: chapter.contentData?.base64EncodedString(),
+                rtfBase64: (chapter.attributedData ?? chapter.contentData)?.base64EncodedString(),
                 updatedAt: chapter.updatedAt
             )
             let encoder = JSONEncoder()
@@ -107,7 +107,7 @@ enum ExportService {
 
         let titleAttributes: [NSAttributedString.Key: Any] = [
             .font: AttributedContent.displayFont(size: 19, weight: .semibold),
-            .foregroundColor: UIColor.label,
+            .foregroundColor: SBTheme.uiPrimary,
         ]
         let titleString = NSAttributedString(string: title, attributes: titleAttributes)
 

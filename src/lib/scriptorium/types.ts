@@ -61,7 +61,10 @@ export interface ScriptoriumState {
   version: 1;
 }
 
-export const THEME_COLORS: Record<HighlightTheme, { label: string; className: string; swatch: string }> = {
+export const THEME_COLORS: Record<
+  HighlightTheme,
+  { label: string; className: string; swatch: string }
+> = {
   covenant: { label: "Covenant", className: "hl-covenant", swatch: "oklch(0.88 0.11 85)" },
   prophecy: { label: "Prophecy", className: "hl-prophecy", swatch: "oklch(0.82 0.12 300)" },
   wisdom: { label: "Wisdom", className: "hl-wisdom", swatch: "oklch(0.85 0.11 180)" },

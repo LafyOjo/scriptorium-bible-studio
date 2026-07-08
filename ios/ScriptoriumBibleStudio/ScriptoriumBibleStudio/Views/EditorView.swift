@@ -21,7 +21,7 @@ struct EditorView: View {
     @State private var titleText = ""
     @State private var status: ChapterStatus = .notStarted
     @State private var showFontSheet = false
-    @State private var selectedColor = UIColor.label
+    @State private var selectedColor = SBTheme.uiInk
 
     var body: some View {
         VStack(spacing: 0) {
@@ -45,7 +45,7 @@ struct EditorView: View {
                     .padding(.vertical, 18)
                 } else {
                     ScrollView {
-                        AttributedPreview(text: attributedText, isScrollEnabled: false)
+                        AttributedPreview(text: readerPreviewText, isScrollEnabled: false)
                             .padding(28)
                             .frame(maxWidth: 760)
                     }
@@ -91,71 +91,141 @@ struct EditorView: View {
 
     private var editorHeader: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 7) {
-                    Text("\(book.name.uppercased()) / CHAPTER \(chapter.number)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(ScriptoriumPalette.rose)
-                        .tracking(1.2)
-
-                    TextField("Chapter title", text: $titleText)
-                        .font(.system(.largeTitle, design: .serif).weight(.semibold))
-                        .textFieldStyle(.plain)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 16) {
+                    titleBlock
+                    Spacer(minLength: 12)
+                    chapterControls(alignment: .trailing, frameAlignment: .trailing, maxWidth: 260)
                 }
 
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 10) {
-                    Picker("Mode", selection: $mode) {
-                        ForEach(EditorMode.allCases) { mode in
-                            Label(mode.label, systemImage: mode.systemImage).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 190)
-
-                    HStack(spacing: 8) {
-                        StatusPill(status: status)
-                        Picker("Status", selection: $status) {
-                            ForEach(ChapterStatus.allCases) { item in
-                                Text(item.label).tag(item)
-                            }
-                        }
-                        .labelsHidden()
-                    }
+                VStack(alignment: .leading, spacing: 12) {
+                    titleBlock
+                    chapterControls(alignment: .leading, frameAlignment: .leading, maxWidth: .infinity)
                 }
             }
 
-            HStack(spacing: 12) {
-                readAloudControls
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    readAloudControls
+                    Spacer(minLength: 12)
+                    writingMeta
+                }
 
-                Spacer()
-
-                Label("\(wordCount(attributedText.string)) words", systemImage: "text.word.spacing")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Text(saveState.label)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(saveState.tint)
+                VStack(alignment: .leading, spacing: 8) {
+                    readAloudControls
+                    writingMeta
+                }
             }
         }
         .padding(20)
         .background(.thinMaterial)
     }
 
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("\(book.name.uppercased()) / CHAPTER \(chapter.number)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(ScriptoriumPalette.rose)
+                .tracking(1.2)
+
+            TextField("Chapter title", text: $titleText)
+                .font(.system(.largeTitle, design: .serif).weight(.semibold))
+                .textFieldStyle(.plain)
+                .lineLimit(1)
+                .minimumScaleFactor(0.58)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func chapterControls(
+        alignment: HorizontalAlignment,
+        frameAlignment: Alignment,
+        maxWidth: CGFloat?
+    ) -> some View {
+        VStack(alignment: alignment, spacing: 10) {
+            Picker("Mode", selection: $mode) {
+                ForEach(EditorMode.allCases) { mode in
+                    Label(mode.label, systemImage: mode.systemImage).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 220)
+
+            HStack(spacing: 8) {
+                StatusPill(status: status)
+                Picker("Status", selection: $status) {
+                    ForEach(ChapterStatus.allCases) { item in
+                        Text(item.label).tag(item)
+                    }
+                }
+                .labelsHidden()
+            }
+        }
+        .frame(maxWidth: maxWidth, alignment: frameAlignment)
+    }
+
+    private var writingMeta: some View {
+        HStack(spacing: 12) {
+            Label("\(wordCount(attributedText.string)) words", systemImage: "text.word.spacing")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(saveState.label)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(saveState.tint)
+        }
+    }
+
     private var formattingToolbar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
+                ToolbarIcon("Undo", systemImage: "arrow.uturn.backward") { richTextContext.undo() }
+                ToolbarIcon("Redo", systemImage: "arrow.uturn.forward") { richTextContext.redo() }
+
+                Divider().frame(height: 24)
+
                 ToolbarIcon("Bold", systemImage: "bold") { richTextContext.toggleBold() }
                 ToolbarIcon("Italic", systemImage: "italic") { richTextContext.toggleItalic() }
                 ToolbarIcon("Underline", systemImage: "underline") { richTextContext.toggleUnderline() }
-                ToolbarIcon("Heading", systemImage: "textformat.size.larger") { richTextContext.applyHeading() }
+                ToolbarIcon("Strike", systemImage: "strikethrough") { richTextContext.toggleStrikethrough() }
+                ToolbarIcon("Superscript", systemImage: "textformat.superscript") { richTextContext.toggleSuperscript() }
+                ToolbarIcon("Subscript", systemImage: "textformat.subscript") { richTextContext.toggleSubscript() }
+
+                Menu {
+                    Button("Heading 1") { richTextContext.applyHeading(level: 1) }
+                    Button("Heading 2") { richTextContext.applyHeading(level: 2) }
+                    Button("Heading 3") { richTextContext.applyHeading(level: 3) }
+                    Button("Paragraph") { richTextContext.applyParagraph() }
+                    Button("Preformatted") { richTextContext.applyPreformatted() }
+                } label: {
+                    Label("Styles", systemImage: "textformat.size.larger")
+                }
+                .buttonStyle(.bordered)
+
+                ToolbarIcon("Outdent", systemImage: "decrease.indent") { richTextContext.adjustIndent(by: -18) }
+                ToolbarIcon("Indent", systemImage: "increase.indent") { richTextContext.adjustIndent(by: 18) }
                 ToolbarIcon("Quote", systemImage: "quote.opening") { richTextContext.applyQuote() }
                 ToolbarIcon("Uppercase", systemImage: "character.cursor.ibeam") { richTextContext.uppercaseSelection() }
                 ToolbarIcon("Small Caps", systemImage: "textformat.alt") { richTextContext.applySmallCaps() }
+                ToolbarIcon("Clear Formatting", systemImage: "eraser") { richTextContext.clearFormatting() }
+
+                Menu {
+                    Button { richTextContext.applyAlignment(.left) } label: { Label("Left", systemImage: "text.alignleft") }
+                    Button { richTextContext.applyAlignment(.center) } label: { Label("Center", systemImage: "text.aligncenter") }
+                    Button { richTextContext.applyAlignment(.right) } label: { Label("Right", systemImage: "text.alignright") }
+                    Button { richTextContext.applyAlignment(.justified) } label: { Label("Justify", systemImage: "text.justify") }
+                } label: {
+                    Label("Align", systemImage: "text.alignleft")
+                }
+                .buttonStyle(.bordered)
+
+                Menu {
+                    Button { richTextContext.toggleList(ordered: false) } label: { Label("Bulleted List", systemImage: "list.bullet") }
+                    Button { richTextContext.toggleList(ordered: true) } label: { Label("Numbered List", systemImage: "list.number") }
+                } label: {
+                    Label("Lists", systemImage: "list.bullet")
+                }
+                .buttonStyle(.bordered)
 
                 Divider().frame(height: 24)
 
@@ -169,6 +239,7 @@ struct EditorView: View {
 
                 ToolbarIcon("Section Title", systemImage: "text.aligncenter") { richTextContext.insertSectionTitle() }
                 ToolbarIcon("Footnote", systemImage: "asterisk") { richTextContext.insertFootnoteMarker() }
+                ToolbarIcon("Link", systemImage: "link") { richTextContext.insertLinkPlaceholder() }
 
                 Divider().frame(height: 24)
 
@@ -187,12 +258,11 @@ struct EditorView: View {
                 .buttonStyle(.bordered)
 
                 Menu {
-                    colorButton("Ink", color: .label)
-                    colorButton("Oxblood", color: UIColor(red: 0.60, green: 0.16, blue: 0.18, alpha: 1))
-                    colorButton("Gold", color: UIColor(red: 0.72, green: 0.51, blue: 0.18, alpha: 1))
-                    colorButton("Teal", color: UIColor(red: 0.10, green: 0.55, blue: 0.47, alpha: 1))
-                    colorButton("Indigo", color: UIColor(red: 0.34, green: 0.43, blue: 0.88, alpha: 1))
-                    colorButton("Rose", color: UIColor(red: 0.82, green: 0.26, blue: 0.39, alpha: 1))
+                    colorButton("Ink", color: SBTheme.uiInk)
+                    colorButton("Primary", color: SBTheme.uiPrimary)
+                    colorButton("Gold", color: SBTheme.uiGold)
+                    colorButton("Crimson", color: SBTheme.uiCrimson)
+                    colorButton("Muted", color: SBTheme.uiMutedForeground)
                 } label: {
                     Label("Colour", systemImage: "paintpalette")
                 }
@@ -211,10 +281,27 @@ struct EditorView: View {
                     }
                     .buttonStyle(.bordered)
 
+                    Menu {
+                        ForEach(FontSizeOption.all) { option in
+                            Button(option.label) {
+                                settings.fontSize = option.size
+                                settings.readerFontSize = option.size
+                                settings.updatedAt = Date()
+                                ScriptoriumActions.save(viewContext)
+                                richTextContext.applyFontSize(CGFloat(option.size))
+                            }
+                        }
+                    } label: {
+                        Label("Size", systemImage: "textformat.size")
+                    }
+                    .buttonStyle(.bordered)
+
                     Stepper(value: Binding(
                         get: { settings.fontSize },
                         set: {
                             settings.fontSize = $0
+                            settings.readerFontSize = $0
+                            settings.updatedAt = Date()
                             ScriptoriumActions.save(viewContext)
                             richTextContext.applyFontSize(CGFloat($0))
                         }
@@ -236,7 +323,7 @@ struct EditorView: View {
             switch speechReader.state {
             case .stopped:
                 Button {
-                    speechReader.start(text: attributedText.string)
+                    speechReader.start(text: attributedText.string, rate: Float(settings?.readAloudRate ?? 0.48))
                 } label: {
                     Label("Read aloud", systemImage: "play.fill")
                 }
@@ -297,7 +384,7 @@ struct EditorView: View {
     private func loadChapter() {
         titleText = chapter.title
         status = chapter.statusValue
-        attributedText = AttributedContent.fromRTFData(chapter.contentData, settings: settings)
+        attributedText = AttributedContent.fromRTFData(chapter.attributedData ?? chapter.contentData, settings: settings)
         nextVerse = nextVerseNumber(in: attributedText.string)
         saveState = .saved
     }
@@ -315,7 +402,9 @@ struct EditorView: View {
     }
 
     private func persist(_ text: NSAttributedString) {
-        chapter.contentData = AttributedContent.rtfData(from: text)
+        let data = AttributedContent.rtfData(from: text)
+        chapter.contentData = data
+        chapter.attributedData = data
         chapter.plainText = text.string
         chapter.updatedAt = Date()
         ScriptoriumActions.save(viewContext)
@@ -340,6 +429,36 @@ struct EditorView: View {
     private func fontLabel(_ fontName: String) -> String {
         FontOption.all.first { $0.id == fontName }?.label ?? "Font"
     }
+
+    private var readerPreviewText: NSAttributedString {
+        guard let currentRange = speechReader.currentRange,
+              currentRange.location + currentRange.length <= attributedText.length else {
+            return attributedText
+        }
+
+        let highlighted = NSMutableAttributedString(attributedString: attributedText)
+        highlighted.addAttribute(
+            .backgroundColor,
+            value: SBTheme.uiGoldSoft.withAlphaComponent(0.58),
+            range: currentRange
+        )
+        return highlighted
+    }
+}
+
+private struct FontSizeOption: Identifiable {
+    let id: String
+    let label: String
+    let size: Double
+
+    static let all: [FontSizeOption] = [
+        FontSizeOption(id: "xs", label: "XS - 14 pt", size: 14),
+        FontSizeOption(id: "s", label: "S - 16 pt", size: 16),
+        FontSizeOption(id: "m", label: "M - 19 pt", size: 19),
+        FontSizeOption(id: "l", label: "L - 22 pt", size: 22),
+        FontSizeOption(id: "xl", label: "XL - 26 pt", size: 26),
+        FontSizeOption(id: "2xl", label: "2XL - 30 pt", size: 30),
+    ]
 }
 
 private enum SaveState {
@@ -377,6 +496,8 @@ private struct FontControlsSheet: View {
                             get: { settings.fontName },
                             set: {
                                 settings.fontName = $0
+                                settings.editorFontName = $0
+                                settings.updatedAt = Date()
                                 ScriptoriumActions.save(viewContext)
                                 richTextContext.applyFont(name: $0)
                             }
@@ -392,6 +513,8 @@ private struct FontControlsSheet: View {
                                 get: { settings.fontSize },
                                 set: {
                                     settings.fontSize = $0
+                                    settings.readerFontSize = $0
+                                    settings.updatedAt = Date()
                                     ScriptoriumActions.save(viewContext)
                                     richTextContext.applyFontSize(CGFloat($0))
                                 }
@@ -404,6 +527,7 @@ private struct FontControlsSheet: View {
                                 get: { settings.lineSpacing },
                                 set: {
                                     settings.lineSpacing = $0
+                                    settings.updatedAt = Date()
                                     ScriptoriumActions.save(viewContext)
                                 }
                             ), in: 0...14, step: 1)
@@ -413,21 +537,21 @@ private struct FontControlsSheet: View {
                     Section("Default Style") {
                         Toggle("Bold", isOn: Binding(
                             get: { settings.defaultBold },
-                            set: { settings.defaultBold = $0; ScriptoriumActions.save(viewContext) }
+                            set: { settings.defaultBold = $0; settings.updatedAt = Date(); ScriptoriumActions.save(viewContext) }
                         ))
                         Toggle("Italic", isOn: Binding(
                             get: { settings.defaultItalic },
-                            set: { settings.defaultItalic = $0; ScriptoriumActions.save(viewContext) }
+                            set: { settings.defaultItalic = $0; settings.updatedAt = Date(); ScriptoriumActions.save(viewContext) }
                         ))
                         Toggle("Underline", isOn: Binding(
                             get: { settings.defaultUnderline },
-                            set: { settings.defaultUnderline = $0; ScriptoriumActions.save(viewContext) }
+                            set: { settings.defaultUnderline = $0; settings.updatedAt = Date(); ScriptoriumActions.save(viewContext) }
                         ))
                     }
 
                     Section("Preview") {
                         Text("In the beginning was the Word.")
-                            .font(.custom(settings.fontName == "system-serif" ? "Times New Roman" : settings.fontName, size: CGFloat(settings.fontSize)))
+                            .font(.custom(settings.fontName, size: CGFloat(settings.fontSize)))
                             .conditionalBold(settings.defaultBold)
                             .conditionalItalic(settings.defaultItalic)
                             .underline(settings.defaultUnderline)

@@ -10,13 +10,19 @@
 		0C02C0BD641A81D87ED0BD58 /* ScriptoriumBibleStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362D4193C9B3F9527563F5F3 /* ScriptoriumBibleStudioApp.swift */; };
 		13F89478657A792D32DA14DC /* ScriptoriumModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E23A23705598F487E4EC5967 /* ScriptoriumModel.swift */; };
 		1A00863A523A584700A21587 /* ScriptoriumActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C7D6D095E211BAD7BA04B32 /* ScriptoriumActions.swift */; };
+		1BDA1F09CD8993AFA215F7C4 /* Cinzel[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC5F070374F5563B9429A4BD /* Cinzel[wght].ttf */; };
 		25845762638A8949676929DD /* ManagedObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93AB303903D754DAE0AB6BCF /* ManagedObjects.swift */; };
 		2C7470B2D5F685010B7F2388 /* SpeechReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E339783EDC216C3EF563DC /* SpeechReader.swift */; };
+		35B3F15E00E7D64461B0F5E8 /* CormorantGaramond[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = AB4114239F40AB7730CCF209 /* CormorantGaramond[wght].ttf */; };
 		36AAF235953E15405EC2E4EC /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA013D31A3FC37549EA7DF5B /* DashboardView.swift */; };
 		42F0D425FC2A7B17E9251426 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EC8351D4984FDAFDDE07BAB /* LibraryView.swift */; };
+		473B1C837B60F826DC3F21C9 /* ParchmentBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14FA2DE17CB594F474B51967 /* ParchmentBackground.swift */; };
 		6994293666A6F15E88F8AD90 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 480EFA3B13074F4E58E7622D /* SearchView.swift */; };
+		6B8D8B256E45B5891968B969 /* SBTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9C7FD7D95CD308C81CCBC28 /* SBTheme.swift */; };
+		6EA0A333D609E85052867E6F /* Inter-Italic[opsz,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9B8956253211B1D38AE93072 /* Inter-Italic[opsz,wght].ttf */; };
 		71EE85226354DE4C49C0803E /* ScriptoriumSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8BDDEB31F88AAB8F1EE81A6 /* ScriptoriumSeed.swift */; };
 		7EA1785B9EC0FF2A77FEAA0C /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1AE29B77EDC9878AA31E58 /* InspectorView.swift */; };
+		889876602363B2D60EBBAD8B /* CormorantGaramond-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = F6015D1B6459A497A97985FB /* CormorantGaramond-Italic[wght].ttf */; };
 		898F042C9638EA7FD14072C7 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 633987DEE394A70053972AA1 /* EditorView.swift */; };
 		9379026212D6D4C814AF4ED3 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35E25836BC0938F31001C841 /* PersistenceController.swift */; };
 		93E67B988D5FA6F796399927 /* RichTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B53F82D5619EB7D2E4F4ECDE /* RichTextEditor.swift */; };
@@ -27,11 +33,13 @@
 		B6355293D8891CFC84457DBA /* ScriptoriumTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFDCDE01F96B1900B3A2F05A /* ScriptoriumTypes.swift */; };
 		BBC1EE8AF890FE2FFA5CA3CD /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573AF1405BE89033D37F35C0 /* ExportService.swift */; };
 		C390B00309234E909FD4AC6E /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE889EAF2830E0950166BC5B /* BackupService.swift */; };
+		C39F3A36069F1481036D9E64 /* Inter[opsz,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 56D0B11EF51FF68C3DDCB26C /* Inter[opsz,wght].ttf */; };
 		D8D0D5F38E001DA7D4BD470A /* StudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82D18B3ECDAE63B8AF5E623 /* StudioView.swift */; };
 		F3B7610710DC32F06874BBB6 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D260235E407E721E7DDBF35A /* ActivityView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		14FA2DE17CB594F474B51967 /* ParchmentBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParchmentBackground.swift; sourceTree = "<group>"; };
 		25E339783EDC216C3EF563DC /* SpeechReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechReader.swift; sourceTree = "<group>"; };
 		2A1AE29B77EDC9878AA31E58 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
 		35E25836BC0938F31001C841 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
@@ -40,11 +48,15 @@
 		3D30591556224238BCA38AC5 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		453DAB690D24002C7F34E128 /* AttributedContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributedContent.swift; sourceTree = "<group>"; };
 		480EFA3B13074F4E58E7622D /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		56D0B11EF51FF68C3DDCB26C /* Inter[opsz,wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Inter[opsz,wght].ttf"; sourceTree = "<group>"; };
 		573AF1405BE89033D37F35C0 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		633987DEE394A70053972AA1 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		7EC8351D4984FDAFDDE07BAB /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		93AB303903D754DAE0AB6BCF /* ManagedObjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedObjects.swift; sourceTree = "<group>"; };
+		9B8956253211B1D38AE93072 /* Inter-Italic[opsz,wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Inter-Italic[opsz,wght].ttf"; sourceTree = "<group>"; };
 		A8BDDEB31F88AAB8F1EE81A6 /* ScriptoriumSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptoriumSeed.swift; sourceTree = "<group>"; };
+		AB4114239F40AB7730CCF209 /* CormorantGaramond[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "CormorantGaramond[wght].ttf"; sourceTree = "<group>"; };
+		AC5F070374F5563B9429A4BD /* Cinzel[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Cinzel[wght].ttf"; sourceTree = "<group>"; };
 		AF632FA682F78F9DDA4EED2F /* Scriptorium.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scriptorium.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B53F82D5619EB7D2E4F4ECDE /* RichTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichTextEditor.swift; sourceTree = "<group>"; };
 		BA013D31A3FC37549EA7DF5B /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -53,8 +65,11 @@
 		D260235E407E721E7DDBF35A /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		DE889EAF2830E0950166BC5B /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		E23A23705598F487E4EC5967 /* ScriptoriumModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptoriumModel.swift; sourceTree = "<group>"; };
+		E32377584187D8BEE2966EDC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EFDCDE01F96B1900B3A2F05A /* ScriptoriumTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptoriumTypes.swift; sourceTree = "<group>"; };
+		F6015D1B6459A497A97985FB /* CormorantGaramond-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "CormorantGaramond-Italic[wght].ttf"; sourceTree = "<group>"; };
 		F82D18B3ECDAE63B8AF5E623 /* StudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioView.swift; sourceTree = "<group>"; };
+		F9C7FD7D95CD308C81CCBC28 /* SBTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SBTheme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -65,8 +80,10 @@
 				8DBEB0ED3A9CFEA9AE1092FE /* CoreData */,
 				F38AF715B0F53486988F06EE /* Editor */,
 				CB31A4D1CC044DA0034F7516 /* Models */,
+				79D53F1AB9DFC88113AF9EA8 /* Resources */,
 				395379E4491A395E3178E93D /* Services */,
 				30BB67951B39BA597A96C06A /* Support */,
+				36A510FC8A77A8EB130A3BC2 /* Theme */,
 				C95876A8DBA1322C052D72F1 /* Views */,
 			);
 			path = ScriptoriumBibleStudio;
@@ -84,8 +101,18 @@
 			isa = PBXGroup;
 			children = (
 				D260235E407E721E7DDBF35A /* ActivityView.swift */,
+				E32377584187D8BEE2966EDC /* Info.plist */,
 			);
 			path = Support;
+			sourceTree = "<group>";
+		};
+		36A510FC8A77A8EB130A3BC2 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				14FA2DE17CB594F474B51967 /* ParchmentBackground.swift */,
+				F9C7FD7D95CD308C81CCBC28 /* SBTheme.swift */,
+			);
+			path = Theme;
 			sourceTree = "<group>";
 		};
 		395379E4491A395E3178E93D /* Services */ = {
@@ -98,6 +125,14 @@
 				25E339783EDC216C3EF563DC /* SpeechReader.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		79D53F1AB9DFC88113AF9EA8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FD3E1978B4EC8B0976C6A5F8 /* Fonts */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		8DBEB0ED3A9CFEA9AE1092FE /* CoreData */ = {
@@ -159,6 +194,18 @@
 			path = Editor;
 			sourceTree = "<group>";
 		};
+		FD3E1978B4EC8B0976C6A5F8 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				AC5F070374F5563B9429A4BD /* Cinzel[wght].ttf */,
+				F6015D1B6459A497A97985FB /* CormorantGaramond-Italic[wght].ttf */,
+				AB4114239F40AB7730CCF209 /* CormorantGaramond[wght].ttf */,
+				9B8956253211B1D38AE93072 /* Inter-Italic[opsz,wght].ttf */,
+				56D0B11EF51FF68C3DDCB26C /* Inter[opsz,wght].ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -167,6 +214,7 @@
 			buildConfigurationList = D366B126AE2ED851EB2C5BF1 /* Build configuration list for PBXNativeTarget "ScriptoriumBibleStudio" */;
 			buildPhases = (
 				85B1FBA9227037FD931AD2B9 /* Sources */,
+				27FED39E6A7B89096E0221FE /* Resources */,
 			);
 			buildRules = (
 			);
@@ -207,6 +255,21 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		27FED39E6A7B89096E0221FE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1BDA1F09CD8993AFA215F7C4 /* Cinzel[wght].ttf in Resources */,
+				889876602363B2D60EBBAD8B /* CormorantGaramond-Italic[wght].ttf in Resources */,
+				35B3F15E00E7D64461B0F5E8 /* CormorantGaramond[wght].ttf in Resources */,
+				6EA0A333D609E85052867E6F /* Inter-Italic[opsz,wght].ttf in Resources */,
+				C39F3A36069F1481036D9E64 /* Inter[opsz,wght].ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		85B1FBA9227037FD931AD2B9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -222,8 +285,10 @@
 				7EA1785B9EC0FF2A77FEAA0C /* InspectorView.swift in Sources */,
 				42F0D425FC2A7B17E9251426 /* LibraryView.swift in Sources */,
 				25845762638A8949676929DD /* ManagedObjects.swift in Sources */,
+				473B1C837B60F826DC3F21C9 /* ParchmentBackground.swift in Sources */,
 				9379026212D6D4C814AF4ED3 /* PersistenceController.swift in Sources */,
 				93E67B988D5FA6F796399927 /* RichTextEditor.swift in Sources */,
+				6B8D8B256E45B5891968B969 /* SBTheme.swift in Sources */,
 				1A00863A523A584700A21587 /* ScriptoriumActions.swift in Sources */,
 				0C02C0BD641A81D87ED0BD58 /* ScriptoriumBibleStudioApp.swift in Sources */,
 				13F89478657A792D32DA14DC /* ScriptoriumModel.swift in Sources */,
@@ -292,7 +357,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 			};
 			name = Release;
 		};
@@ -303,18 +368,14 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = LUP9S643B8;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Scriptorium;
-				INFOPLIST_KEY_NSSupportsLiveActivities = NO;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_FILE = ScriptoriumBibleStudio/Support/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.lovable.scriptoriumbiblestudio;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.lafoireprobook.scriptoriumbiblestudio;
 				PRODUCT_NAME = Scriptorium;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -328,18 +389,14 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = LUP9S643B8;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Scriptorium;
-				INFOPLIST_KEY_NSSupportsLiveActivities = NO;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_FILE = ScriptoriumBibleStudio/Support/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.lovable.scriptoriumbiblestudio;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.lafoireprobook.scriptoriumbiblestudio;
 				PRODUCT_NAME = Scriptorium;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -405,7 +462,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 			};
 			name = Debug;
 		};

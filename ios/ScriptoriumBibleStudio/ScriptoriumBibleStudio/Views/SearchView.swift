@@ -12,12 +12,18 @@ struct SearchView: View {
         let cleanQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         return chapters.compactMap { chapter in
-            let book = chapter.book ?? books.first { $0.id == chapter.book?.id }
+            let book = chapter.book ?? books.first { book in
+                book.chapterArray.contains { $0.objectID == chapter.objectID }
+            }
+            let bookName = book?.name ?? ""
             let text = chapter.plainText
             let notes = chapter.noteArray
 
             let matchesQuery = cleanQuery.isEmpty
                 || text.lowercased().contains(cleanQuery)
+                || bookName.lowercased().contains(cleanQuery)
+                || "\(bookName) \(chapter.number)".lowercased().contains(cleanQuery)
+                || "chapter \(chapter.number)".contains(cleanQuery)
                 || chapter.title.lowercased().contains(cleanQuery)
                 || chapter.tagArray.contains { $0.lowercased().contains(cleanQuery) }
                 || notes.contains { $0.text.lowercased().contains(cleanQuery) || $0.excerpt.lowercased().contains(cleanQuery) }
@@ -33,7 +39,7 @@ struct SearchView: View {
             guard matchesQuery && matchesTheme else { return nil }
 
             let excerpt = excerpt(for: text, query: cleanQuery)
-            return SearchResult(chapter: chapter, bookName: book?.name ?? "Book", excerpt: excerpt)
+            return SearchResult(chapter: chapter, bookName: bookName.isEmpty ? "Book" : bookName, excerpt: excerpt)
         }
         .sorted { $0.chapter.updatedAt > $1.chapter.updatedAt }
     }
@@ -62,9 +68,7 @@ struct SearchView: View {
                             }
                             Text(result.chapter.title)
                                 .font(.title3.weight(.semibold))
-                            Text(result.excerpt)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
+                            HighlightedExcerpt(text: result.excerpt, query: query)
                                 .lineLimit(3)
                             if !result.chapter.tagArray.isEmpty {
                                 FlowLayout(spacing: 6) {
@@ -131,4 +135,29 @@ private struct SearchResult: Identifiable {
     let chapter: SBChapter
     let bookName: String
     let excerpt: String
+}
+
+private struct HighlightedExcerpt: View {
+    let text: String
+    let query: String
+
+    var body: some View {
+        let cleanQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !cleanQuery.isEmpty,
+           let range = text.range(of: cleanQuery, options: [.caseInsensitive, .diacriticInsensitive]) {
+            Text(String(text[..<range.lowerBound]))
+                .font(.callout)
+                .foregroundStyle(SBTheme.mutedForeground)
+            + Text(String(text[range]))
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(SBTheme.crimson)
+            + Text(String(text[range.upperBound...]))
+                .font(.callout)
+                .foregroundStyle(SBTheme.mutedForeground)
+        } else {
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(SBTheme.mutedForeground)
+        }
+    }
 }

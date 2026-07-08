@@ -14,6 +14,9 @@ struct ScriptoriumBackup: Codable {
 struct CollectionDTO: Codable {
     var id: String
     var name: String
+    var orderIndex: Int64?
+    var createdAt: Date?
+    var updatedAt: Date?
 }
 
 struct BookDTO: Codable {
@@ -22,6 +25,8 @@ struct BookDTO: Codable {
     var testament: String
     var orderIndex: Int64
     var collectionId: String?
+    var createdAt: Date?
+    var updatedAt: Date?
 }
 
 struct ChapterDTO: Codable {
@@ -34,6 +39,7 @@ struct ChapterDTO: Codable {
     var status: String
     var tags: [String]
     var highlightThemes: [String]
+    var createdAt: Date?
     var updatedAt: Date
 }
 
@@ -41,27 +47,39 @@ struct NoteDTO: Codable {
     var id: String
     var chapterId: String
     var text: String
+    var body: String?
     var excerpt: String
     var theme: String?
+    var rangeLocation: Int64?
+    var rangeLength: Int64?
     var createdAt: Date
+    var updatedAt: Date?
 }
 
 struct BookmarkDTO: Codable {
     var id: String
     var bookId: String
     var chapterId: String?
+    var chapterID: String?
     var label: String
+    var snippet: String?
     var passage: String?
+    var location: Int64?
     var createdAt: Date
+    var updatedAt: Date?
 }
 
 struct SettingsDTO: Codable {
+    var editorFontName: String?
     var fontName: String
+    var readerFontSize: Double?
     var fontSize: Double
     var lineSpacing: Double
     var defaultBold: Bool
     var defaultItalic: Bool
     var defaultUnderline: Bool
+    var readAloudRate: Double?
+    var theme: String?
 }
 
 enum BackupService {
@@ -74,15 +92,25 @@ enum BackupService {
         settings: SBAppSettings?
     ) -> ScriptoriumBackup {
         ScriptoriumBackup(
-            version: 1,
-            collections: collections.map { CollectionDTO(id: $0.id, name: $0.name) },
+            version: 2,
+            collections: collections.map {
+                CollectionDTO(
+                    id: $0.id,
+                    name: $0.name,
+                    orderIndex: $0.orderIndex,
+                    createdAt: $0.createdAt,
+                    updatedAt: $0.updatedAt
+                )
+            },
             books: books.map {
                 BookDTO(
                     id: $0.id,
                     name: $0.name,
                     testament: $0.testament,
                     orderIndex: $0.orderIndex,
-                    collectionId: $0.collection?.id
+                    collectionId: $0.collection?.id,
+                    createdAt: $0.createdAt,
+                    updatedAt: $0.updatedAt
                 )
             },
             chapters: chapters.map {
@@ -91,11 +119,12 @@ enum BackupService {
                     bookId: $0.book?.id ?? "",
                     number: $0.number,
                     title: $0.title,
-                    rtfBase64: $0.contentData?.base64EncodedString(),
+                    rtfBase64: ($0.attributedData ?? $0.contentData)?.base64EncodedString(),
                     plainText: $0.plainText,
                     status: $0.status,
                     tags: $0.tagArray,
                     highlightThemes: $0.themeArray.map(\.rawValue),
+                    createdAt: $0.createdAt,
                     updatedAt: $0.updatedAt
                 )
             },
@@ -105,9 +134,13 @@ enum BackupService {
                     id: note.id,
                     chapterId: chapterId,
                     text: note.text,
+                    body: note.body,
                     excerpt: note.excerpt,
                     theme: note.theme,
-                    createdAt: note.createdAt
+                    rangeLocation: note.rangeLocation,
+                    rangeLength: note.rangeLength,
+                    createdAt: note.createdAt,
+                    updatedAt: note.updatedAt
                 )
             },
             bookmarks: bookmarks.compactMap { bookmark in
@@ -116,19 +149,27 @@ enum BackupService {
                     id: bookmark.id,
                     bookId: bookId,
                     chapterId: bookmark.chapter?.id,
+                    chapterID: bookmark.chapterID,
                     label: bookmark.label,
+                    snippet: bookmark.snippet,
                     passage: bookmark.passage,
-                    createdAt: bookmark.createdAt
+                    location: bookmark.location,
+                    createdAt: bookmark.createdAt,
+                    updatedAt: bookmark.updatedAt
                 )
             },
             settings: settings.map {
                 SettingsDTO(
+                    editorFontName: $0.editorFontName,
                     fontName: $0.fontName,
+                    readerFontSize: $0.readerFontSize,
                     fontSize: $0.fontSize,
                     lineSpacing: $0.lineSpacing,
                     defaultBold: $0.defaultBold,
                     defaultItalic: $0.defaultItalic,
-                    defaultUnderline: $0.defaultUnderline
+                    defaultUnderline: $0.defaultUnderline,
+                    readAloudRate: $0.readAloudRate,
+                    theme: $0.theme
                 )
             }
         )
@@ -155,6 +196,9 @@ enum BackupService {
             let collection = SBCollection(context: context)
             collection.id = dto.id
             collection.name = dto.name
+            collection.orderIndex = dto.orderIndex ?? Int64(collectionsById.count + 1)
+            collection.createdAt = dto.createdAt
+            collection.updatedAt = dto.updatedAt
             collectionsById[dto.id] = collection
         }
 
@@ -165,6 +209,8 @@ enum BackupService {
             book.name = dto.name
             book.testament = dto.testament
             book.orderIndex = dto.orderIndex
+            book.createdAt = dto.createdAt
+            book.updatedAt = dto.updatedAt
             if let collectionId = dto.collectionId {
                 book.collection = collectionsById[collectionId]
             }
@@ -184,7 +230,9 @@ enum BackupService {
             chapter.status = dto.status
             chapter.tags = dto.tags.joined(separator: ",")
             chapter.highlightThemes = dto.highlightThemes.joined(separator: ",")
+            chapter.createdAt = dto.createdAt
             chapter.updatedAt = dto.updatedAt
+            chapter.attributedData = chapter.contentData
             chaptersById[dto.id] = chapter
         }
 
@@ -193,10 +241,14 @@ enum BackupService {
             let note = SBNote(context: context)
             note.id = dto.id
             note.chapter = chapter
+            note.body = dto.body ?? dto.text
             note.text = dto.text
             note.excerpt = dto.excerpt
             note.theme = dto.theme
+            note.rangeLocation = dto.rangeLocation ?? 0
+            note.rangeLength = dto.rangeLength ?? Int64(dto.excerpt.utf16.count)
             note.createdAt = dto.createdAt
+            note.updatedAt = dto.updatedAt
         }
 
         for dto in backup.bookmarks {
@@ -205,20 +257,30 @@ enum BackupService {
             bookmark.id = dto.id
             bookmark.book = book
             bookmark.chapter = dto.chapterId.flatMap { chaptersById[$0] }
+            bookmark.chapterID = dto.chapterID ?? dto.chapterId
             bookmark.label = dto.label
+            bookmark.snippet = dto.snippet
             bookmark.passage = dto.passage
+            bookmark.location = dto.location ?? 0
             bookmark.createdAt = dto.createdAt
+            bookmark.updatedAt = dto.updatedAt
         }
 
         if let dto = backup.settings {
             let settings = SBAppSettings(context: context)
             settings.id = "default"
+            settings.editorFontName = dto.editorFontName ?? dto.fontName
             settings.fontName = dto.fontName
+            settings.readerFontSize = dto.readerFontSize ?? dto.fontSize
             settings.fontSize = dto.fontSize
             settings.lineSpacing = dto.lineSpacing
             settings.defaultBold = dto.defaultBold
             settings.defaultItalic = dto.defaultItalic
             settings.defaultUnderline = dto.defaultUnderline
+            settings.readAloudRate = dto.readAloudRate ?? 0.48
+            settings.theme = dto.theme ?? "parchment"
+            settings.createdAt = Date()
+            settings.updatedAt = Date()
         } else {
             _ = ScriptoriumSeed.insertDefaultSettings(context: context)
         }

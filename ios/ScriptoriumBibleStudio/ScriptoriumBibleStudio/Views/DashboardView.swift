@@ -9,7 +9,7 @@ struct DashboardView: View {
     let openLibrary: () -> Void
 
     private var completeCount: Int {
-        chapters.filter { $0.statusValue == .complete }.count
+        chapters.filter { $0.statusValue == .final }.count
     }
 
     private var totalWords: Int {

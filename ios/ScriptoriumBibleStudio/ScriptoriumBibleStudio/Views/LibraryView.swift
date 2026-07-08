@@ -14,24 +14,17 @@ struct LibraryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Volume Index")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(ScriptoriumPalette.rose)
-                            .textCase(.uppercase)
-                            .tracking(1.4)
-                        Text("Bible Library")
-                            .font(.system(size: 36, weight: .semibold, design: .serif))
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .bottom) {
+                        libraryTitle
+                        Spacer(minLength: 16)
+                        newBookButton
                     }
-                    Spacer()
-                    Button {
-                        addBookPresented = true
-                    } label: {
-                        Label("New Book", systemImage: "plus")
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        libraryTitle
+                        newBookButton
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(ScriptoriumPalette.indigo)
                 }
 
                 ForEach(books, id: \.objectID) { book in
@@ -55,25 +48,43 @@ struct LibraryView: View {
         }
     }
 
+    private var libraryTitle: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Volume Index")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(ScriptoriumPalette.rose)
+                .textCase(.uppercase)
+                .tracking(1.4)
+            Text("Bible Library")
+                .font(.system(size: 36, weight: .semibold, design: .serif))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+    }
+
+    private var newBookButton: some View {
+        Button {
+            addBookPresented = true
+        } label: {
+            Label("New Book", systemImage: "plus")
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(ScriptoriumPalette.indigo)
+    }
+
     private func bookSection(_ book: SBBook) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(book.name)
-                        .font(.title2.weight(.semibold))
-                    Text(book.testamentValue.label)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline) {
+                    bookTitle(book)
+                    Spacer(minLength: 12)
+                    addChapterButton(book)
                 }
-                Spacer()
-                Button {
-                    let chapter = ScriptoriumActions.createChapter(book: book, settings: settings, context: viewContext)
-                    openChapter(chapter)
-                } label: {
-                    Label("Add Chapter", systemImage: "plus")
+
+                VStack(alignment: .leading, spacing: 8) {
+                    bookTitle(book)
+                    addChapterButton(book)
                 }
-                .buttonStyle(.bordered)
             }
 
             let bookChapters = book.chapterArray
@@ -103,6 +114,29 @@ struct LibraryView: View {
                 }
             }
         }
+    }
+
+    private func bookTitle(_ book: SBBook) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(book.name)
+                .font(.title2.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(book.testamentValue.label)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+        }
+    }
+
+    private func addChapterButton(_ book: SBBook) -> some View {
+        Button {
+            let chapter = ScriptoriumActions.createChapter(book: book, settings: settings, context: viewContext)
+            openChapter(chapter)
+        } label: {
+            Label("Add Chapter", systemImage: "plus")
+        }
+        .buttonStyle(.bordered)
     }
 }
 

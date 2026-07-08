@@ -41,7 +41,9 @@ export function useScriptorium() {
   const updateChapter = useCallback((id: string, patch: Partial<Chapter>) => {
     setState((s) => ({
       ...s,
-      chapters: s.chapters.map((c) => (c.id === id ? { ...c, ...patch, updatedAt: Date.now() } : c)),
+      chapters: s.chapters.map((c) =>
+        c.id === id ? { ...c, ...patch, updatedAt: Date.now() } : c,
+      ),
     }));
   }, []);
 
@@ -51,8 +53,15 @@ export function useScriptorium() {
       const existing = s.chapters.filter((c) => c.bookId === bookId);
       const number = existing.length + 1;
       const chapter: Chapter = {
-        id, bookId, number, title: `Chapter ${number}`,
-        html: "<p><br/></p>", status: "not-started", tags: [], updatedAt: Date.now(), notes: [],
+        id,
+        bookId,
+        number,
+        title: `Chapter ${number}`,
+        html: "<p><br/></p>",
+        status: "not-started",
+        tags: [],
+        updatedAt: Date.now(),
+        notes: [],
       };
       return { ...s, chapters: [...s.chapters, chapter] };
     });
@@ -63,14 +72,17 @@ export function useScriptorium() {
     setState((s) => ({ ...s, chapters: s.chapters.filter((c) => c.id !== id) }));
   }, []);
 
-  const addBook = useCallback((name: string, testament: Book["testament"] = "custom", collectionId?: string) => {
-    const id = uid();
-    setState((s) => ({
-      ...s,
-      books: [...s.books, { id, name, testament, collectionId, order: s.books.length + 1 }],
-    }));
-    return id;
-  }, []);
+  const addBook = useCallback(
+    (name: string, testament: Book["testament"] = "custom", collectionId?: string) => {
+      const id = uid();
+      setState((s) => ({
+        ...s,
+        books: [...s.books, { id, name, testament, collectionId, order: s.books.length + 1 }],
+      }));
+      return id;
+    },
+    [],
+  );
 
   const addCollection = useCallback((name: string) => {
     const id = uid();
@@ -113,12 +125,19 @@ export function useScriptorium() {
   const resetSeed = useCallback(() => setState(seedState()), []);
 
   return {
-    state, setState,
-    updateChapter, addChapter, deleteChapter,
-    addBook, addCollection,
-    addBookmark, removeBookmark,
-    addNote, removeNote,
-    importState, resetSeed,
+    state,
+    setState,
+    updateChapter,
+    addChapter,
+    deleteChapter,
+    addBook,
+    addCollection,
+    addBookmark,
+    removeBookmark,
+    addNote,
+    removeNote,
+    importState,
+    resetSeed,
   };
 }
 

@@ -41,10 +41,34 @@ export function seedState(): ScriptoriumState {
   const rev = { id: uid(), name: "Needs Revision" };
   const fav = { id: uid(), name: "Favourite Passages" };
 
-  const genesis = { id: uid(), name: "Genesis", testament: "old" as const, collectionId: ot.id, order: 1 };
-  const psalms = { id: uid(), name: "Psalms", testament: "old" as const, collectionId: ot.id, order: 2 };
-  const john = { id: uid(), name: "John", testament: "new" as const, collectionId: nt.id, order: 3 };
-  const revelation = { id: uid(), name: "Revelation", testament: "new" as const, collectionId: nt.id, order: 4 };
+  const genesis = {
+    id: uid(),
+    name: "Genesis",
+    testament: "old" as const,
+    collectionId: ot.id,
+    order: 1,
+  };
+  const psalms = {
+    id: uid(),
+    name: "Psalms",
+    testament: "old" as const,
+    collectionId: ot.id,
+    order: 2,
+  };
+  const john = {
+    id: uid(),
+    name: "John",
+    testament: "new" as const,
+    collectionId: nt.id,
+    order: 3,
+  };
+  const revelation = {
+    id: uid(),
+    name: "Revelation",
+    testament: "new" as const,
+    collectionId: nt.id,
+    order: 4,
+  };
 
   const now = Date.now();
 
@@ -53,13 +77,59 @@ export function seedState(): ScriptoriumState {
     collections: [ot, nt, done, rev, fav],
     books: [genesis, psalms, john, revelation],
     bookmarks: [
-      { id: uid(), bookId: john.id, label: "The Word Made Flesh", passage: "John 1:1–5", createdAt: now },
+      {
+        id: uid(),
+        bookId: john.id,
+        label: "The Word Made Flesh",
+        passage: "John 1:1–5",
+        createdAt: now,
+      },
     ],
     chapters: [
-      { id: uid(), bookId: genesis.id, number: 1, title: "The Beginning", html: genesis1, status: "drafting", tags: ["creation"], updatedAt: now, notes: [] },
-      { id: uid(), bookId: psalms.id, number: 1, title: "The Two Paths", html: psalms1, status: "revised", tags: ["wisdom", "poetry"], updatedAt: now - 86400000, notes: [] },
-      { id: uid(), bookId: john.id, number: 1, title: "The Word", html: john1, status: "complete", tags: ["christology"], updatedAt: now - 172800000, notes: [] },
-      { id: uid(), bookId: revelation.id, number: 1, title: "Vision on Patmos", html: revelation1, status: "drafting", tags: ["apocalyptic"], updatedAt: now - 259200000, notes: [] },
+      {
+        id: uid(),
+        bookId: genesis.id,
+        number: 1,
+        title: "The Beginning",
+        html: genesis1,
+        status: "drafting",
+        tags: ["creation"],
+        updatedAt: now,
+        notes: [],
+      },
+      {
+        id: uid(),
+        bookId: psalms.id,
+        number: 1,
+        title: "The Two Paths",
+        html: psalms1,
+        status: "revised",
+        tags: ["wisdom", "poetry"],
+        updatedAt: now - 86400000,
+        notes: [],
+      },
+      {
+        id: uid(),
+        bookId: john.id,
+        number: 1,
+        title: "The Word",
+        html: john1,
+        status: "complete",
+        tags: ["christology"],
+        updatedAt: now - 172800000,
+        notes: [],
+      },
+      {
+        id: uid(),
+        bookId: revelation.id,
+        number: 1,
+        title: "Vision on Patmos",
+        html: revelation1,
+        status: "drafting",
+        tags: ["apocalyptic"],
+        updatedAt: now - 259200000,
+        notes: [],
+      },
     ],
   };
 }

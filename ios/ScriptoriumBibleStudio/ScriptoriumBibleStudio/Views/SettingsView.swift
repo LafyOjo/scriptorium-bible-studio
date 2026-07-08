@@ -25,6 +25,8 @@ struct SettingsView: View {
                         get: { settings.fontName },
                         set: {
                             settings.fontName = $0
+                            settings.editorFontName = $0
+                            settings.updatedAt = Date()
                             ScriptoriumActions.save(viewContext)
                         }
                     )) {
@@ -38,6 +40,8 @@ struct SettingsView: View {
                             get: { settings.fontSize },
                             set: {
                                 settings.fontSize = $0
+                                settings.readerFontSize = $0
+                                settings.updatedAt = Date()
                                 ScriptoriumActions.save(viewContext)
                             }
                         ), in: 12...34, step: 1)
@@ -48,6 +52,7 @@ struct SettingsView: View {
                             get: { settings.lineSpacing },
                             set: {
                                 settings.lineSpacing = $0
+                                settings.updatedAt = Date()
                                 ScriptoriumActions.save(viewContext)
                             }
                         ), in: 0...14, step: 1)
@@ -55,16 +60,28 @@ struct SettingsView: View {
 
                     Toggle("Bold by default", isOn: Binding(
                         get: { settings.defaultBold },
-                        set: { settings.defaultBold = $0; ScriptoriumActions.save(viewContext) }
+                        set: { settings.defaultBold = $0; settings.updatedAt = Date(); ScriptoriumActions.save(viewContext) }
                     ))
                     Toggle("Italic by default", isOn: Binding(
                         get: { settings.defaultItalic },
-                        set: { settings.defaultItalic = $0; ScriptoriumActions.save(viewContext) }
+                        set: { settings.defaultItalic = $0; settings.updatedAt = Date(); ScriptoriumActions.save(viewContext) }
                     ))
                     Toggle("Underline by default", isOn: Binding(
                         get: { settings.defaultUnderline },
-                        set: { settings.defaultUnderline = $0; ScriptoriumActions.save(viewContext) }
+                        set: { settings.defaultUnderline = $0; settings.updatedAt = Date(); ScriptoriumActions.save(viewContext) }
                     ))
+
+                    VStack(alignment: .leading) {
+                        Text("Read Aloud Rate: \(settings.readAloudRate, specifier: "%.2f")")
+                        Slider(value: Binding(
+                            get: { settings.readAloudRate == 0 ? 0.48 : settings.readAloudRate },
+                            set: {
+                                settings.readAloudRate = $0
+                                settings.updatedAt = Date()
+                                ScriptoriumActions.save(viewContext)
+                            }
+                        ), in: 0.36...0.62, step: 0.01)
+                    }
                 }
             }
 

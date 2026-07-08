@@ -4,32 +4,39 @@ import Foundation
 enum ScriptoriumSeed {
     @discardableResult
     static func insertDefaultSettings(context: NSManagedObjectContext) -> SBAppSettings {
+        let now = Date()
         let settings = SBAppSettings(context: context)
         settings.id = "default"
-        settings.fontName = "system-serif"
+        settings.editorFontName = SBTheme.FontName.body
+        settings.fontName = SBTheme.FontName.body
+        settings.readerFontSize = 19
         settings.fontSize = 19
         settings.lineSpacing = 5
         settings.defaultBold = false
         settings.defaultItalic = false
         settings.defaultUnderline = false
+        settings.readAloudRate = 0.48
+        settings.theme = "parchment"
+        settings.createdAt = now
+        settings.updatedAt = now
         return settings
     }
 
     static func insertSampleData(context: NSManagedObjectContext) {
         let settings = insertDefaultSettings(context: context)
-
-        let oldDraft = collection("Old Testament Draft", context: context)
-        let newDraft = collection("New Testament Draft", context: context)
-        _ = collection("Completed Chapters", context: context)
-        _ = collection("Needs Revision", context: context)
-        _ = collection("Favourite Passages", context: context)
-
-        let genesis = book("Genesis", testament: .old, order: 1, collection: oldDraft, context: context)
-        let psalms = book("Psalms", testament: .old, order: 2, collection: oldDraft, context: context)
-        let john = book("John", testament: .new, order: 3, collection: newDraft, context: context)
-        let revelation = book("Revelation", testament: .new, order: 4, collection: newDraft, context: context)
-
         let now = Date()
+
+        let oldDraft = collection("Old Testament Draft", order: 1, context: context)
+        let newDraft = collection("New Testament Draft", order: 2, context: context)
+        _ = collection("Completed Chapters", order: 3, context: context)
+        _ = collection("Needs Revision", order: 4, context: context)
+        _ = collection("Favourite Passages", order: 5, context: context)
+
+        let genesis = book("Genesis", testament: .old, order: 1, collection: oldDraft, now: now, context: context)
+        let psalms = book("Psalms", testament: .old, order: 2, collection: oldDraft, now: now, context: context)
+        let john = book("John", testament: .new, order: 3, collection: newDraft, now: now, context: context)
+        let revelation = book("Revelation", testament: .new, order: 4, collection: newDraft, now: now, context: context)
+
         _ = chapter(
             book: genesis,
             number: 1,
@@ -51,7 +58,7 @@ enum ScriptoriumSeed {
             book: psalms,
             number: 1,
             title: "The Two Paths",
-            status: .revised,
+            status: .revising,
             tags: ["wisdom", "poetry"],
             updatedAt: now.addingTimeInterval(-86_400),
             content: AttributedContent.makeSeeded(sectionTitle: "Psalm of the Two Paths", verses: [
@@ -66,7 +73,7 @@ enum ScriptoriumSeed {
             book: john,
             number: 1,
             title: "The Word",
-            status: .complete,
+            status: .final,
             tags: ["christology"],
             updatedAt: now.addingTimeInterval(-172_800),
             content: AttributedContent.makeSeeded(sectionTitle: "The Word Made Flesh", verses: [
@@ -96,17 +103,25 @@ enum ScriptoriumSeed {
 
         let bookmark = SBBookmark(context: context)
         bookmark.id = UUID().uuidString
+        bookmark.chapterID = johnChapter.id
         bookmark.label = "The Word Made Flesh"
+        bookmark.snippet = "In the beginning was the Word"
         bookmark.passage = "John 1:1-5"
+        bookmark.location = 0
         bookmark.createdAt = now
+        bookmark.updatedAt = now
         bookmark.book = john
         bookmark.chapter = johnChapter
     }
 
-    private static func collection(_ name: String, context: NSManagedObjectContext) -> SBCollection {
+    private static func collection(_ name: String, order: Int64 = 1, context: NSManagedObjectContext) -> SBCollection {
+        let now = Date()
         let collection = SBCollection(context: context)
         collection.id = UUID().uuidString
         collection.name = name
+        collection.orderIndex = order
+        collection.createdAt = now
+        collection.updatedAt = now
         return collection
     }
 
@@ -115,6 +130,7 @@ enum ScriptoriumSeed {
         testament: Testament,
         order: Int64,
         collection: SBCollection,
+        now: Date,
         context: NSManagedObjectContext
     ) -> SBBook {
         let book = SBBook(context: context)
@@ -123,6 +139,8 @@ enum ScriptoriumSeed {
         book.testament = testament.rawValue
         book.orderIndex = order
         book.collection = collection
+        book.createdAt = now
+        book.updatedAt = now
         return book
     }
 
@@ -145,8 +163,11 @@ enum ScriptoriumSeed {
         chapter.status = status.rawValue
         chapter.tags = tags.joined(separator: ",")
         chapter.highlightThemes = ""
+        chapter.createdAt = updatedAt
         chapter.updatedAt = updatedAt
-        chapter.contentData = AttributedContent.rtfData(from: content)
+        let data = AttributedContent.rtfData(from: content)
+        chapter.contentData = data
+        chapter.attributedData = data
         chapter.plainText = content.string
         return chapter
     }

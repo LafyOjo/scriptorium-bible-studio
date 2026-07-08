@@ -2,10 +2,10 @@ import SwiftUI
 import UIKit
 
 enum ChapterStatus: String, CaseIterable, Identifiable {
-    case notStarted = "not-started"
+    case notStarted
     case drafting
-    case revised
-    case complete
+    case revising
+    case final
 
     var id: String { rawValue }
 
@@ -13,26 +13,26 @@ enum ChapterStatus: String, CaseIterable, Identifiable {
         switch self {
         case .notStarted: return "Not Started"
         case .drafting: return "Drafting"
-        case .revised: return "Revised"
-        case .complete: return "Complete"
+        case .revising: return "Revising"
+        case .final: return "Final"
         }
     }
 
     var tint: Color {
         switch self {
-        case .notStarted: return .secondary
-        case .drafting: return ScriptoriumPalette.amber
-        case .revised: return ScriptoriumPalette.indigo
-        case .complete: return ScriptoriumPalette.teal
+        case .notStarted: return SBTheme.mutedForeground
+        case .drafting: return SBTheme.warning
+        case .revising: return SBTheme.prophecy
+        case .final: return SBTheme.promise
         }
     }
 
     var uiColor: UIColor {
         switch self {
-        case .notStarted: return .secondaryLabel
-        case .drafting: return UIColor(red: 0.92, green: 0.59, blue: 0.16, alpha: 1)
-        case .revised: return UIColor(red: 0.34, green: 0.43, blue: 0.88, alpha: 1)
-        case .complete: return UIColor(red: 0.10, green: 0.55, blue: 0.47, alpha: 1)
+        case .notStarted: return SBTheme.uiMutedForeground
+        case .drafting: return UIColor(hex: 0xF1C87A)
+        case .revising: return UIColor(hex: 0xB8C7E6)
+        case .final: return UIColor(hex: 0xC8E1B4)
         }
     }
 }
@@ -54,48 +54,46 @@ enum Testament: String, CaseIterable, Identifiable {
 }
 
 enum HighlightTheme: String, CaseIterable, Identifiable {
-    case covenant
+    case promise
+    case warning
     case prophecy
-    case wisdom
-    case judgement
-    case mercy
-    case genealogy
-    case law
-    case gospel
-    case personal
+    case prayer
+    case doctrine
+    case note
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .covenant: return "Covenant"
+        case .promise: return "Promise"
+        case .warning: return "Warning"
         case .prophecy: return "Prophecy"
-        case .wisdom: return "Wisdom"
-        case .judgement: return "Judgement"
-        case .mercy: return "Mercy"
-        case .genealogy: return "Genealogy"
-        case .law: return "Law"
-        case .gospel: return "Gospel"
-        case .personal: return "Personal Study"
+        case .prayer: return "Prayer"
+        case .doctrine: return "Doctrine"
+        case .note: return "Note"
         }
     }
 
     var color: Color {
         switch self {
-        case .covenant: return Color(red: 0.95, green: 0.80, blue: 0.36)
-        case .prophecy: return Color(red: 0.77, green: 0.68, blue: 0.96)
-        case .wisdom: return Color(red: 0.49, green: 0.82, blue: 0.78)
-        case .judgement: return Color(red: 0.95, green: 0.50, blue: 0.40)
-        case .mercy: return Color(red: 0.55, green: 0.86, blue: 0.62)
-        case .genealogy: return Color(red: 0.84, green: 0.80, blue: 0.67)
-        case .law: return Color(red: 0.62, green: 0.72, blue: 0.95)
-        case .gospel: return Color(red: 0.98, green: 0.76, blue: 0.24)
-        case .personal: return Color(red: 0.92, green: 0.66, blue: 0.85)
+        case .promise: return SBTheme.promise
+        case .warning: return SBTheme.warning
+        case .prophecy: return SBTheme.prophecy
+        case .prayer: return SBTheme.prayer
+        case .doctrine: return SBTheme.doctrine
+        case .note: return SBTheme.note
         }
     }
 
     var uiColor: UIColor {
-        UIColor(color).withAlphaComponent(0.48)
+        switch self {
+        case .promise: return UIColor(hex: 0xC8E1B4, alpha: 0.42)
+        case .warning: return UIColor(hex: 0xF1C87A, alpha: 0.42)
+        case .prophecy: return UIColor(hex: 0xB8C7E6, alpha: 0.42)
+        case .prayer: return UIColor(hex: 0xE5B4C8, alpha: 0.42)
+        case .doctrine: return UIColor(hex: 0xC9B892, alpha: 0.42)
+        case .note: return UIColor(hex: 0xE8D28A, alpha: 0.42)
+        }
     }
 }
 
@@ -143,25 +141,13 @@ struct FontOption: Identifiable, Hashable {
     let label: String
 
     static let all: [FontOption] = [
-        FontOption(id: "system-serif", label: "System Serif"),
-        FontOption(id: "NewYork-Regular", label: "New York"),
+        FontOption(id: SBTheme.FontName.body, label: "Cormorant Garamond"),
+        FontOption(id: SBTheme.FontName.display, label: "Cinzel"),
+        FontOption(id: SBTheme.FontName.ui, label: "Inter"),
         FontOption(id: "Georgia", label: "Georgia"),
-        FontOption(id: "AvenirNext-Regular", label: "Avenir Next"),
         FontOption(id: "HoeflerText-Regular", label: "Hoefler Text"),
-        FontOption(id: "Menlo-Regular", label: "Menlo"),
+        FontOption(id: SBTheme.FontName.monospace, label: "Menlo"),
     ]
-}
-
-enum ScriptoriumPalette {
-    static let background = Color(red: 0.96, green: 0.96, blue: 0.94)
-    static let panel = Color(uiColor: .secondarySystemGroupedBackground)
-    static let ink = Color(red: 0.12, green: 0.13, blue: 0.16)
-    static let mutedInk = Color(red: 0.42, green: 0.43, blue: 0.48)
-    static let indigo = Color(red: 0.34, green: 0.43, blue: 0.88)
-    static let teal = Color(red: 0.10, green: 0.55, blue: 0.47)
-    static let amber = Color(red: 0.92, green: 0.59, blue: 0.16)
-    static let rose = Color(red: 0.82, green: 0.26, blue: 0.39)
-    static let gold = Color(red: 0.76, green: 0.58, blue: 0.24)
 }
 
 extension NSAttributedString.Key {

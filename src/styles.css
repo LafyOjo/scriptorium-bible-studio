@@ -94,8 +94,13 @@
     background-attachment: fixed;
   }
 
-  .font-serif { font-family: var(--font-serif); }
-  .font-display { font-family: var(--font-display); letter-spacing: 0.04em; }
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+  }
 }
 
 @utility parchment-panel {
@@ -115,8 +120,7 @@
 }
 
 @utility manuscript-page {
-  background:
-    radial-gradient(ellipse at center, oklch(0.98 0.015 85), oklch(0.92 0.035 78));
+  background: radial-gradient(ellipse at center, oklch(0.98 0.015 85), oklch(0.92 0.035 78));
   box-shadow:
     inset 0 0 60px oklch(0.6 0.08 55 / 0.18),
     0 30px 60px -20px oklch(0.2 0.05 40 / 0.4);
@@ -124,15 +128,33 @@
 }
 
 /* Highlight theme colors used in editor content */
-.hl-covenant { background-color: oklch(0.88 0.11 85 / 0.6); }
-.hl-prophecy { background-color: oklch(0.82 0.12 300 / 0.4); }
-.hl-wisdom { background-color: oklch(0.85 0.11 180 / 0.5); }
-.hl-judgement { background-color: oklch(0.72 0.16 25 / 0.35); }
-.hl-mercy { background-color: oklch(0.85 0.1 145 / 0.5); }
-.hl-genealogy { background-color: oklch(0.85 0.05 60 / 0.6); }
-.hl-law { background-color: oklch(0.8 0.09 250 / 0.4); }
-.hl-gospel { background-color: oklch(0.88 0.13 95 / 0.55); }
-.hl-personal { background-color: oklch(0.85 0.08 340 / 0.45); }
+.hl-covenant {
+  background-color: oklch(0.88 0.11 85 / 0.6);
+}
+.hl-prophecy {
+  background-color: oklch(0.82 0.12 300 / 0.4);
+}
+.hl-wisdom {
+  background-color: oklch(0.85 0.11 180 / 0.5);
+}
+.hl-judgement {
+  background-color: oklch(0.72 0.16 25 / 0.35);
+}
+.hl-mercy {
+  background-color: oklch(0.85 0.1 145 / 0.5);
+}
+.hl-genealogy {
+  background-color: oklch(0.85 0.05 60 / 0.6);
+}
+.hl-law {
+  background-color: oklch(0.8 0.09 250 / 0.4);
+}
+.hl-gospel {
+  background-color: oklch(0.88 0.13 95 / 0.55);
+}
+.hl-personal {
+  background-color: oklch(0.85 0.08 340 / 0.45);
+}
 
 .verse-num {
   font-family: var(--font-display);
@@ -154,7 +176,10 @@
   text-transform: uppercase;
 }
 
-.small-caps { font-variant: small-caps; letter-spacing: 0.05em; }
+.small-caps {
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+}
 
 blockquote.poetic {
   border-left: 2px solid var(--color-gold);
@@ -171,10 +196,35 @@ blockquote.poetic {
   vertical-align: super;
 }
 
-.reader-prose p { margin-bottom: 0.6em; text-indent: 1.25em; }
-.reader-prose p.no-indent { text-indent: 0; }
+.reader-prose p {
+  margin-bottom: 0.6em;
+  text-indent: 1.25em;
+}
+.reader-prose p.no-indent {
+  text-indent: 0;
+}
+.reader-block {
+  margin: 0.2rem 0;
+  border: 1px solid transparent;
+}
+.reader-block > :last-child {
+  margin-bottom: 0;
+}
+.reader-block-active {
+  background: oklch(0.88 0.08 82 / 0.34);
+  border-color: oklch(0.72 0.13 78 / 0.45);
+  box-shadow: inset 3px 0 0 var(--color-gold);
+}
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: oklch(0.75 0.05 70 / 0.6); border-radius: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.05 70 / 0.6);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

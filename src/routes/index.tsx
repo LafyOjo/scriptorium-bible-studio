@@ -11,9 +11,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Scriptorium Bible Studio — Author your own scripture" },
-      { name: "description", content: "A premium authoring, annotation and reading studio for writing your own version of the Bible." },
+      {
+        name: "description",
+        content:
+          "A premium authoring, annotation and reading studio for writing your own version of the Bible.",
+      },
       { property: "og:title", content: "Scriptorium Bible Studio" },
-      { property: "og:description", content: "A private manuscript studio for writing, annotating and publishing your own Bible." },
+      {
+        property: "og:description",
+        content:
+          "A private manuscript studio for writing, annotating and publishing your own Bible.",
+      },
     ],
   }),
   component: Studio,
@@ -38,7 +46,8 @@ function Studio() {
     [s.state.chapters, activeChapterId],
   );
   const activeBook = useMemo(
-    () => (activeChapter ? s.state.books.find((b) => b.id === activeChapter.bookId) ?? null : null),
+    () =>
+      activeChapter ? (s.state.books.find((b) => b.id === activeChapter.bookId) ?? null) : null,
     [s.state.books, activeChapter],
   );
 
@@ -48,8 +57,8 @@ function Studio() {
   };
 
   return (
-    <div className="min-h-screen w-full p-3 lg:p-4">
-      <div className="flex h-[calc(100vh-1.5rem)] lg:h-[calc(100vh-2rem)] gap-3 lg:gap-4">
+    <div className="min-h-screen w-full p-2 sm:p-3 lg:p-4">
+      <div className="flex min-h-[calc(100vh-1rem)] flex-col gap-3 sm:min-h-[calc(100vh-1.5rem)] lg:h-[calc(100vh-2rem)] lg:flex-row lg:gap-4">
         <LeftPanel
           view={view}
           onView={setView}
@@ -58,12 +67,19 @@ function Studio() {
           collections={s.state.collections}
           activeChapterId={activeChapterId}
           onSelectChapter={openChapter}
-          onAddBook={(name, collectionId) => { s.addBook(name, "custom", collectionId); }}
-          onAddChapter={(bookId) => { const id = s.addChapter(bookId); openChapter(id); }}
-          onAddCollection={(name) => { s.addCollection(name); }}
+          onAddBook={(name, collectionId) => {
+            s.addBook(name, "custom", collectionId);
+          }}
+          onAddChapter={(bookId) => {
+            const id = s.addChapter(bookId);
+            openChapter(id);
+          }}
+          onAddCollection={(name) => {
+            s.addCollection(name);
+          }}
         />
 
-        <main className="flex-1 min-w-0 flex">
+        <main className="flex min-h-[72vh] flex-1 min-w-0 lg:min-h-0">
           {view === "dashboard" && (
             <div className="flex-1 parchment-panel rounded-2xl overflow-hidden flex flex-col">
               <Dashboard
@@ -80,7 +96,10 @@ function Studio() {
                 books={s.state.books}
                 chapters={s.state.chapters}
                 onOpenChapter={openChapter}
-                onAddChapter={(bookId) => { const id = s.addChapter(bookId); openChapter(id); }}
+                onAddChapter={(bookId) => {
+                  const id = s.addChapter(bookId);
+                  openChapter(id);
+                }}
                 onAddBook={() => {
                   const name = window.prompt("Name of the new book or section?");
                   if (name?.trim()) s.addBook(name.trim(), "custom");
@@ -101,9 +120,13 @@ function Studio() {
           {view === "editor" && !activeChapter && (
             <div className="flex-1 parchment-panel rounded-2xl grid place-items-center">
               <div className="text-center max-w-sm p-8">
-                <div className="font-display text-xs tracking-widest text-muted-foreground uppercase">Empty Page</div>
+                <div className="font-display text-xs tracking-widest text-muted-foreground uppercase">
+                  Empty Page
+                </div>
                 <div className="gold-divider my-3" />
-                <p className="font-serif text-lg text-primary">Select or create a chapter to begin.</p>
+                <p className="font-serif text-lg text-primary">
+                  Select or create a chapter to begin.
+                </p>
               </div>
             </div>
           )}
@@ -119,6 +142,7 @@ function Studio() {
           onAddNote={s.addNote}
           onRemoveNote={s.removeNote}
           onSelectChapter={openChapter}
+          onUpdateChapter={s.updateChapter}
         />
       </div>
     </div>

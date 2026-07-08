@@ -16,6 +16,8 @@ final class PersistenceController: ObservableObject {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
 
+        container.persistentStoreDescriptions.first?.setOption(true as NSNumber, forKey: NSMigratePersistentStoresAutomaticallyOption)
+        container.persistentStoreDescriptions.first?.setOption(true as NSNumber, forKey: NSInferMappingModelAutomaticallyOption)
         container.persistentStoreDescriptions.first?.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         container.persistentStoreDescriptions.first?.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
@@ -27,6 +29,7 @@ final class PersistenceController: ObservableObject {
 
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        container.viewContext.undoManager = UndoManager()
 
         seedIfNeeded(context: container.viewContext)
     }
@@ -60,6 +63,9 @@ final class PersistenceController: ObservableObject {
         if ((try? context.count(for: request)) ?? 0) == 0 {
             _ = ScriptoriumSeed.insertDefaultSettings(context: context)
             save(context: context)
+        } else if let settings = try? context.fetch(request).first {
+            normalize(settings: settings)
+            save(context: context)
         }
     }
 
@@ -78,5 +84,31 @@ final class PersistenceController: ObservableObject {
                     objects.forEach(context.delete)
                 }
             }
+    }
+
+    private func normalize(settings: SBAppSettings) {
+        let now = Date()
+        if settings.fontName.isEmpty {
+            settings.fontName = SBTheme.FontName.body
+        }
+        if settings.editorFontName == nil {
+            settings.editorFontName = settings.fontName
+        }
+        if settings.fontSize == 0 {
+            settings.fontSize = 19
+        }
+        if settings.readerFontSize == 0 {
+            settings.readerFontSize = settings.fontSize
+        }
+        if settings.readAloudRate == 0 {
+            settings.readAloudRate = 0.48
+        }
+        if settings.theme == nil {
+            settings.theme = "parchment"
+        }
+        if settings.createdAt == nil {
+            settings.createdAt = now
+        }
+        settings.updatedAt = settings.updatedAt ?? now
     }
 }
