@@ -134,6 +134,8 @@ function Studio() {
           onSelectChapter={openChapter}
         />
       </div>
+      )}
     </div>
   );
 }
+
