@@ -52,7 +52,17 @@ function Studio() {
 
   return (
     <div className="min-h-screen w-full p-3 lg:p-4">
+      {!mounted ? (
+        <div className="h-[calc(100vh-1.5rem)] lg:h-[calc(100vh-2rem)] parchment-panel rounded-2xl grid place-items-center">
+          <div className="text-center">
+            <div className="font-display text-xs tracking-widest text-muted-foreground uppercase">Scriptorium</div>
+            <div className="gold-divider my-3 mx-auto w-24" />
+            <p className="font-serif text-lg text-primary">Opening the manuscript…</p>
+          </div>
+        </div>
+      ) : (
       <div className="flex h-[calc(100vh-1.5rem)] lg:h-[calc(100vh-2rem)] gap-3 lg:gap-4">
+
         <LeftPanel
           view={view}
           onView={setView}
