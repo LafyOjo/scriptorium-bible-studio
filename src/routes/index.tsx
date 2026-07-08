@@ -34,6 +34,9 @@ function Studio() {
   const [view, setView] = useState<View>("dashboard");
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
   const [selectionText, setSelectionText] = useState("");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
 
   useEffect(() => {
     if (!activeChapterId && s.state.chapters[0]) {
@@ -57,8 +60,23 @@ function Studio() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen w-full p-2 sm:p-3 lg:p-4">
       <div className="flex min-h-[calc(100vh-1rem)] flex-col gap-3 sm:min-h-[calc(100vh-1.5rem)] lg:h-[calc(100vh-2rem)] lg:flex-row lg:gap-4">
+=======
+    <div className="min-h-screen w-full p-3 lg:p-4">
+      {!mounted ? (
+        <div className="h-[calc(100vh-1.5rem)] lg:h-[calc(100vh-2rem)] parchment-panel rounded-2xl grid place-items-center">
+          <div className="text-center">
+            <div className="font-display text-xs tracking-widest text-muted-foreground uppercase">Scriptorium</div>
+            <div className="gold-divider my-3 mx-auto w-24" />
+            <p className="font-serif text-lg text-primary">Opening the manuscript…</p>
+          </div>
+        </div>
+      ) : (
+      <div className="flex h-[calc(100vh-1.5rem)] lg:h-[calc(100vh-2rem)] gap-3 lg:gap-4">
+
+>>>>>>> bb4360fd4197a072283b8ac16107699d24f1cc76
         <LeftPanel
           view={view}
           onView={setView}
@@ -145,6 +163,8 @@ function Studio() {
           onUpdateChapter={s.updateChapter}
         />
       </div>
+      )}
     </div>
   );
 }
+
