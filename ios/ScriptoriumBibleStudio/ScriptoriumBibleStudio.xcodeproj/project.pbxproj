@@ -34,6 +34,7 @@
 		BBC1EE8AF890FE2FFA5CA3CD /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573AF1405BE89033D37F35C0 /* ExportService.swift */; };
 		C390B00309234E909FD4AC6E /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE889EAF2830E0950166BC5B /* BackupService.swift */; };
 		C39F3A36069F1481036D9E64 /* Inter[opsz,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 56D0B11EF51FF68C3DDCB26C /* Inter[opsz,wght].ttf */; };
+		D4367E522A812159EA99321F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E05F662DB44C289BADB2DB00 /* OnboardingView.swift */; };
 		D8D0D5F38E001DA7D4BD470A /* StudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82D18B3ECDAE63B8AF5E623 /* StudioView.swift */; };
 		F3B7610710DC32F06874BBB6 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D260235E407E721E7DDBF35A /* ActivityView.swift */; };
 /* End PBXBuildFile section */
@@ -64,6 +65,7 @@
 		C67E3CC01DFFDC248EA904EE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D260235E407E721E7DDBF35A /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		DE889EAF2830E0950166BC5B /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
+		E05F662DB44C289BADB2DB00 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E23A23705598F487E4EC5967 /* ScriptoriumModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptoriumModel.swift; sourceTree = "<group>"; };
 		E32377584187D8BEE2966EDC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EFDCDE01F96B1900B3A2F05A /* ScriptoriumTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptoriumTypes.swift; sourceTree = "<group>"; };
@@ -154,6 +156,7 @@
 				633987DEE394A70053972AA1 /* EditorView.swift */,
 				2A1AE29B77EDC9878AA31E58 /* InspectorView.swift */,
 				7EC8351D4984FDAFDDE07BAB /* LibraryView.swift */,
+				E05F662DB44C289BADB2DB00 /* OnboardingView.swift */,
 				480EFA3B13074F4E58E7622D /* SearchView.swift */,
 				C67E3CC01DFFDC248EA904EE /* SettingsView.swift */,
 				3D30591556224238BCA38AC5 /* SidebarView.swift */,
@@ -285,6 +288,7 @@
 				7EA1785B9EC0FF2A77FEAA0C /* InspectorView.swift in Sources */,
 				42F0D425FC2A7B17E9251426 /* LibraryView.swift in Sources */,
 				25845762638A8949676929DD /* ManagedObjects.swift in Sources */,
+				D4367E522A812159EA99321F /* OnboardingView.swift in Sources */,
 				473B1C837B60F826DC3F21C9 /* ParchmentBackground.swift in Sources */,
 				9379026212D6D4C814AF4ED3 /* PersistenceController.swift in Sources */,
 				93E67B988D5FA6F796399927 /* RichTextEditor.swift in Sources */,

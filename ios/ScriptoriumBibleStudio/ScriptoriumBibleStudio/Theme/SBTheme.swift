@@ -101,6 +101,8 @@ enum ScriptoriumPalette {
     static let gold = SBTheme.gold
 }
 
+typealias ScriptoriumTheme = SBTheme
+
 extension Color {
     init(hex: UInt32, alpha: Double = 1) {
         self.init(

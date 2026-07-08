@@ -18,13 +18,18 @@ final class SpeechReader: NSObject, ObservableObject, AVSpeechSynthesizerDelegat
         synthesizer.delegate = self
     }
 
-    func start(text: String, rate: Float = 0.48) {
+    func start(text: String, rate: Float = 0.48, voiceIdentifier: String? = nil) {
         stop()
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = rate
         utterance.pitchMultiplier = 1.0
-        utterance.voice = AVSpeechSynthesisVoice(language: Locale.current.identifier)
-            ?? AVSpeechSynthesisVoice(language: "en-US")
+        if let voiceIdentifier,
+           let voice = AVSpeechSynthesisVoice(identifier: voiceIdentifier) {
+            utterance.voice = voice
+        } else {
+            utterance.voice = AVSpeechSynthesisVoice(language: Locale.current.identifier)
+                ?? AVSpeechSynthesisVoice(language: "en-US")
+        }
         synthesizer.speak(utterance)
         state = .speaking
     }

@@ -48,14 +48,29 @@ struct StudioView: View {
         appSettings.first
     }
 
+    private var preferredScheme: ColorScheme? {
+        switch settings?.theme {
+        case "dark": return .dark
+        case "light": return .light
+        default: return nil
+        }
+    }
+
     var body: some View {
         Group {
-            if horizontalSizeClass == .compact {
+            if settings == nil && books.isEmpty {
+                LoadingStateView(
+                    title: "Opening The Scriptorium",
+                    message: "Preparing your local manuscript library and writing settings."
+                )
+                .studioBackground()
+            } else if horizontalSizeClass == .compact {
                 compactShell
             } else {
                 regularShell
             }
         }
+        .preferredColorScheme(preferredScheme)
         .onAppear {
             if selectedChapterID == nil {
                 selectedChapterID = chapters.first?.id
@@ -142,6 +157,7 @@ struct StudioView: View {
                 SearchView(
                     chapters: Array(chapters),
                     books: Array(books),
+                    bookmarks: Array(bookmarks),
                     openChapter: openChapter
                 )
                 .navigationTitle(StudioSection.search.title)
@@ -249,6 +265,7 @@ struct StudioView: View {
             SearchView(
                 chapters: Array(chapters),
                 books: Array(books),
+                bookmarks: Array(bookmarks),
                 openChapter: openChapter
             )
         case .settings:
@@ -289,4 +306,12 @@ private enum CompactEditorPane: String, CaseIterable, Identifiable {
         case .tools: return "sidebar.right"
         }
     }
+}
+
+#Preview("Studio Shell") {
+    let controller = PersistenceController.preview
+
+    return StudioView()
+        .environment(\.managedObjectContext, controller.container.viewContext)
+        .environmentObject(controller)
 }

@@ -87,6 +87,38 @@ enum ScriptoriumActions {
         save(context)
     }
 
+    static func moveBook(_ book: SBBook, direction: MoveDirection, in books: [SBBook], context: NSManagedObjectContext) {
+        let ordered = books.sorted { $0.orderIndex < $1.orderIndex }
+        guard let index = ordered.firstIndex(where: { $0.objectID == book.objectID }) else { return }
+        let targetIndex = direction == .up ? index - 1 : index + 1
+        guard ordered.indices.contains(targetIndex) else { return }
+
+        let other = ordered[targetIndex]
+        let originalOrder = book.orderIndex
+        book.orderIndex = other.orderIndex
+        other.orderIndex = originalOrder
+        book.updatedAt = Date()
+        other.updatedAt = Date()
+        save(context)
+    }
+
+    static func moveChapter(_ chapter: SBChapter, direction: MoveDirection, in book: SBBook, context: NSManagedObjectContext) {
+        let ordered = book.chapterArray
+        guard let index = ordered.firstIndex(where: { $0.objectID == chapter.objectID }) else { return }
+        let targetIndex = direction == .up ? index - 1 : index + 1
+        guard ordered.indices.contains(targetIndex) else { return }
+
+        let other = ordered[targetIndex]
+        let originalNumber = chapter.number
+        chapter.number = other.number
+        other.number = originalNumber
+        let now = Date()
+        chapter.updatedAt = now
+        other.updatedAt = now
+        book.updatedAt = now
+        save(context)
+    }
+
     static func renameCollection(_ collection: SBCollection, name: String, context: NSManagedObjectContext) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
@@ -209,6 +241,11 @@ enum ScriptoriumActions {
         guard let snippet, let range = text.range(of: snippet) else { return 0 }
         return Int64(text.distance(from: text.startIndex, to: range.lowerBound))
     }
+}
+
+enum MoveDirection {
+    case up
+    case down
 }
 
 private extension String {

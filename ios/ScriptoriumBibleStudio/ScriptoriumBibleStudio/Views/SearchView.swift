@@ -3,6 +3,7 @@ import SwiftUI
 struct SearchView: View {
     let chapters: [SBChapter]
     let books: [SBBook]
+    let bookmarks: [SBBookmark]
     let openChapter: (SBChapter) -> Void
 
     @State private var query = ""
@@ -18,6 +19,9 @@ struct SearchView: View {
             let bookName = book?.name ?? ""
             let text = chapter.plainText
             let notes = chapter.noteArray
+            let chapterBookmarks = bookmarks.filter { bookmark in
+                bookmark.chapter?.objectID == chapter.objectID || bookmark.chapterID == chapter.id
+            }
 
             let matchesQuery = cleanQuery.isEmpty
                 || text.lowercased().contains(cleanQuery)
@@ -27,6 +31,7 @@ struct SearchView: View {
                 || chapter.title.lowercased().contains(cleanQuery)
                 || chapter.tagArray.contains { $0.lowercased().contains(cleanQuery) }
                 || notes.contains { $0.text.lowercased().contains(cleanQuery) || $0.excerpt.lowercased().contains(cleanQuery) }
+                || chapterBookmarks.contains { bookmarkMatches($0, query: cleanQuery) }
 
             let matchesTheme: Bool
             if let selectedTheme {
@@ -38,85 +43,153 @@ struct SearchView: View {
 
             guard matchesQuery && matchesTheme else { return nil }
 
-            let excerpt = excerpt(for: text, query: cleanQuery)
-            return SearchResult(chapter: chapter, bookName: bookName.isEmpty ? "Book" : bookName, excerpt: excerpt)
+            let match = matchContext(
+                chapterText: text,
+                notes: notes,
+                bookmarks: chapterBookmarks,
+                query: cleanQuery
+            )
+
+            return SearchResult(
+                chapter: chapter,
+                bookName: bookName.isEmpty ? "Book" : bookName,
+                excerpt: match.excerpt,
+                source: match.source
+            )
         }
         .sorted { $0.chapter.updatedAt > $1.chapter.updatedAt }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ScrollView {
             searchHeader
-            Divider()
-            if results.isEmpty {
-                EmptyStateView(
-                    title: "No Results",
-                    message: "Try another phrase, tag, note, or highlight colour.",
-                    systemImage: "magnifyingglass"
-                )
-            } else {
-                List(results) { result in
-                    Button {
-                        openChapter(result.chapter)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("\(result.bookName) \(result.chapter.number)")
-                                    .font(.headline)
-                                Spacer()
-                                StatusPill(status: result.chapter.statusValue)
-                            }
-                            Text(result.chapter.title)
-                                .font(.title3.weight(.semibold))
-                            HighlightedExcerpt(text: result.excerpt, query: query)
-                                .lineLimit(3)
-                            if !result.chapter.tagArray.isEmpty {
-                                FlowLayout(spacing: 6) {
-                                    ForEach(result.chapter.tagArray, id: \.self) { tag in
-                                        TagChip(label: tag)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.vertical, 8)
+
+            LazyVStack(spacing: 12) {
+                if results.isEmpty {
+                    ParchmentPanel {
+                        EmptyStateView(
+                            title: query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && selectedTheme == nil ? "Search Your Manuscript" : "No Results",
+                            message: query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && selectedTheme == nil
+                                ? "Look across chapters, notes, bookmarks, tags and highlight colours."
+                                : "Try another phrase, book, chapter, note, bookmark, tag, or highlight colour.",
+                            systemImage: "magnifyingglass"
+                        )
+                        .frame(minHeight: 300)
                     }
-                    .buttonStyle(.plain)
+                } else {
+                    ForEach(results) { result in
+                        searchResultCard(result)
+                    }
                 }
-                .listStyle(.plain)
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 28)
         }
     }
 
-    private var searchHeader: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Search")
-                .font(.largeTitle.weight(.semibold))
+    private func searchResultCard(_ result: SearchResult) -> some View {
+        Button {
+            openChapter(result.chapter)
+        } label: {
+            ParchmentPanel(padding: 16) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(result.bookName) \(result.chapter.number)")
+                                .font(SBTheme.display(10, weight: .semibold))
+                                .tracking(1.8)
+                                .foregroundStyle(SBTheme.crimson)
+                            Text(result.chapter.title)
+                                .font(SBTheme.body(24, weight: .semibold))
+                                .foregroundStyle(SBTheme.ink)
+                                .lineLimit(2)
+                        }
+                        Spacer(minLength: 10)
+                        StatusPill(status: result.chapter.statusValue)
+                    }
 
-            HStack(spacing: 10) {
-                Label("Query", systemImage: "magnifyingglass")
-                    .labelStyle(.iconOnly)
-                    .foregroundStyle(.secondary)
-                TextField("Search across chapters, notes, and tags", text: $query)
-                    .textFieldStyle(.plain)
-            }
-            .padding(12)
-            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
+                    Text(result.source.uppercased())
+                        .font(SBTheme.display(9, weight: .semibold))
+                        .tracking(1.8)
+                        .foregroundStyle(SBTheme.gold)
 
-            Picker("Highlight", selection: $selectedTheme) {
-                Text("Any Highlight").tag(Optional<HighlightTheme>.none)
-                ForEach(HighlightTheme.allCases) { theme in
-                    Text(theme.label).tag(Optional(theme))
+                    HighlightedExcerpt(text: result.excerpt, query: query)
+                        .lineLimit(4)
+
+                    if !result.chapter.tagArray.isEmpty {
+                        FlowLayout(spacing: 6) {
+                            ForEach(result.chapter.tagArray, id: \.self) { tag in
+                                TagChip(label: tag)
+                            }
+                        }
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .pickerStyle(.menu)
-
-            Text("\(results.count) result\(results.count == 1 ? "" : "s")")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
         }
-        .padding(20)
-        .background(.thinMaterial)
+        .buttonStyle(.plain)
+    }
+
+    private var searchHeader: some View {
+        ParchmentPanel {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Manuscript Index")
+                            .font(SBTheme.display(10, weight: .semibold))
+                            .tracking(2.2)
+                            .foregroundStyle(SBTheme.crimson)
+                            .textCase(.uppercase)
+                        Text("Search")
+                            .font(SBTheme.body(34, weight: .semibold))
+                            .foregroundStyle(SBTheme.primary)
+                    }
+                    Spacer()
+                    Text("\(results.count)")
+                        .font(SBTheme.display(24, weight: .semibold))
+                        .foregroundStyle(SBTheme.gold)
+                        .frame(width: 54, height: 54)
+                        .background(SBTheme.goldSoft.opacity(0.24), in: Circle())
+                }
+
+                HStack(spacing: 10) {
+                    Label("Query", systemImage: "magnifyingglass")
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(SBTheme.mutedForeground)
+                    TextField("Search chapters, notes, bookmarks and tags", text: $query)
+                        .textFieldStyle(.plain)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    if !query.isEmpty {
+                        Button {
+                            query = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(SBTheme.mutedForeground)
+                    }
+                }
+                .frame(minHeight: 44)
+                .padding(.horizontal, 12)
+                .background(SBTheme.parchment.opacity(0.58), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(SBTheme.border, lineWidth: 1)
+                )
+
+                Picker("Highlight", selection: $selectedTheme) {
+                    Text("Any Highlight").tag(Optional<HighlightTheme>.none)
+                    ForEach(HighlightTheme.allCases) { theme in
+                        Text(theme.label).tag(Optional(theme))
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 18)
+        .padding(.bottom, 12)
     }
 
     private func excerpt(for text: String, query: String) -> String {
@@ -128,12 +201,55 @@ struct SearchView: View {
         let end = text.index(range.upperBound, offsetBy: 90, limitedBy: text.endIndex) ?? text.endIndex
         return "..." + text[start..<end].trimmingCharacters(in: .whitespacesAndNewlines) + "..."
     }
+
+    private func bookmarkMatches(_ bookmark: SBBookmark, query: String) -> Bool {
+        guard !query.isEmpty else { return true }
+        return bookmark.label.lowercased().contains(query)
+            || bookmark.passage?.lowercased().contains(query) == true
+            || bookmark.snippet?.lowercased().contains(query) == true
+    }
+
+    private func matchContext(
+        chapterText: String,
+        notes: [SBNote],
+        bookmarks: [SBBookmark],
+        query: String
+    ) -> SearchMatchContext {
+        if !query.isEmpty,
+           let bookmark = bookmarks.first(where: { bookmarkMatches($0, query: query) }) {
+            return SearchMatchContext(
+                source: "Bookmark",
+                excerpt: bookmark.snippet ?? bookmark.passage ?? bookmark.label
+            )
+        }
+
+        if !query.isEmpty,
+           let note = notes.first(where: { $0.text.lowercased().contains(query) || $0.excerpt.lowercased().contains(query) }) {
+            return SearchMatchContext(source: "Note", excerpt: note.excerpt.isEmpty ? note.text : note.excerpt)
+        }
+
+        if !query.isEmpty {
+            return SearchMatchContext(source: "Manuscript", excerpt: excerpt(for: chapterText, query: query))
+        }
+
+        if let bookmark = bookmarks.first {
+            return SearchMatchContext(source: "Bookmark", excerpt: bookmark.snippet ?? bookmark.passage ?? bookmark.label)
+        }
+
+        return SearchMatchContext(source: "Manuscript", excerpt: String(chapterText.prefix(180)))
+    }
 }
 
 private struct SearchResult: Identifiable {
     let id = UUID()
     let chapter: SBChapter
     let bookName: String
+    let excerpt: String
+    let source: String
+}
+
+private struct SearchMatchContext {
+    let source: String
     let excerpt: String
 }
 
@@ -160,4 +276,18 @@ private struct HighlightedExcerpt: View {
                 .foregroundStyle(SBTheme.mutedForeground)
         }
     }
+}
+
+#Preview("Search") {
+    let controller = PersistenceController.preview
+    let context = controller.container.viewContext
+    let books = (try? context.fetch(SBBook.fetchRequest())) ?? []
+    let chapters = (try? context.fetch(SBChapter.fetchRequest())) ?? []
+    let bookmarks = (try? context.fetch(SBBookmark.fetchRequest())) ?? []
+
+    return NavigationStack {
+        SearchView(chapters: chapters, books: books, bookmarks: bookmarks) { _ in }
+            .studioBackground()
+    }
+    .environment(\.managedObjectContext, context)
 }

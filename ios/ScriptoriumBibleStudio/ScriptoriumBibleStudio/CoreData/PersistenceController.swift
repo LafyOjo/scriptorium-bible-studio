@@ -3,6 +3,7 @@ import Foundation
 
 final class PersistenceController: ObservableObject {
     static let shared = PersistenceController()
+    static let preview = PersistenceController(inMemory: true)
 
     let container: NSPersistentContainer
 

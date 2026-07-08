@@ -3,6 +3,7 @@ import SwiftUI
 import UIKit
 
 struct EditorView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.managedObjectContext) private var viewContext
 
     @ObservedObject var chapter: SBChapter
@@ -22,13 +23,21 @@ struct EditorView: View {
     @State private var status: ChapterStatus = .notStarted
     @State private var showFontSheet = false
     @State private var selectedColor = SBTheme.uiInk
+    @State private var readerTheme: ReaderTheme = .parchment
+
+    private var isCompact: Bool {
+        horizontalSizeClass == .compact
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             editorHeader
             Divider()
-            if mode == .write {
+            if mode == .write && !isCompact {
                 formattingToolbar
+                Divider()
+            } else if mode == .read && !isCompact {
+                readerControlStrip
                 Divider()
             }
 
@@ -41,20 +50,39 @@ struct EditorView: View {
                         settings: settings,
                         onTextChange: scheduleSave
                     )
-                    .padding(.horizontal, 22)
-                    .padding(.vertical, 18)
+                    .padding(.horizontal, isCompact ? 14 : 22)
+                    .padding(.vertical, isCompact ? 12 : 18)
                 } else {
                     ScrollView {
-                        AttributedPreview(text: readerPreviewText, isScrollEnabled: false)
-                            .padding(28)
-                            .frame(maxWidth: 760)
+                        ParchmentPanel(padding: isCompact ? 20 : 30) {
+                            AttributedPreview(text: readerPreviewText, isScrollEnabled: false)
+                                .frame(maxWidth: 760)
+                        }
+                        .background(readerTheme.background)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .padding(isCompact ? 14 : 28)
                     }
+                    .background(readerTheme.background.opacity(0.5))
                 }
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if mode == .write && isCompact {
+                compactFormattingBar
+            } else if mode == .read && isCompact {
+                readerControlStrip
             }
         }
         .navigationTitle("\(book.name) \(chapter.number)")
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    persist(attributedText)
+                    saveState = .saved
+                } label: {
+                    Label("Save", systemImage: "tray.and.arrow.down")
+                }
+                PlainTextShareButton(chapter: chapter, book: book)
                 ExportMenuButton(chapter: chapter, book: book)
                 Button {
                     showFontSheet = true
@@ -87,6 +115,11 @@ struct EditorView: View {
             chapter.updatedAt = Date()
             ScriptoriumActions.save(viewContext)
         }
+        .onChange(of: readerTheme) { _, value in
+            settings?.theme = value.rawValue
+            settings?.updatedAt = Date()
+            ScriptoriumActions.save(viewContext)
+        }
     }
 
     private var editorHeader: some View {
@@ -117,7 +150,7 @@ struct EditorView: View {
                 }
             }
         }
-        .padding(20)
+        .padding(isCompact ? 14 : 20)
         .background(.thinMaterial)
     }
 
@@ -129,7 +162,7 @@ struct EditorView: View {
                 .tracking(1.2)
 
             TextField("Chapter title", text: $titleText)
-                .font(.system(.largeTitle, design: .serif).weight(.semibold))
+                .font(SBTheme.body(isCompact ? 28 : 36, weight: .semibold))
                 .textFieldStyle(.plain)
                 .lineLimit(1)
                 .minimumScaleFactor(0.58)
@@ -318,12 +351,64 @@ struct EditorView: View {
         .background(.bar)
     }
 
+    private var compactFormattingBar: some View {
+        VStack(spacing: 0) {
+            GoldDivider()
+                .padding(.top, 8)
+            formattingToolbar
+        }
+        .background(.ultraThinMaterial)
+    }
+
+    private var readerControlStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                readAloudControls
+
+                Menu {
+                    ForEach(ReaderTheme.allCases) { theme in
+                        Button {
+                            readerTheme = theme
+                        } label: {
+                            Label(theme.label, systemImage: theme.systemImage)
+                        }
+                    }
+                } label: {
+                    Label(readerTheme.label, systemImage: readerTheme.systemImage)
+                }
+                .buttonStyle(.bordered)
+
+                if let settings {
+                    Stepper(value: Binding(
+                        get: { settings.readerFontSize == 0 ? settings.fontSize : settings.readerFontSize },
+                        set: {
+                            settings.readerFontSize = $0
+                            settings.updatedAt = Date()
+                            ScriptoriumActions.save(viewContext)
+                        }
+                    ), in: 14...34, step: 1) {
+                        Label("\(Int(settings.readerFontSize == 0 ? settings.fontSize : settings.readerFontSize)) pt", systemImage: "textformat.size")
+                            .font(.caption.weight(.medium))
+                    }
+                    .frame(width: 150)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        }
+        .background(.bar)
+    }
+
     private var readAloudControls: some View {
         HStack(spacing: 8) {
             switch speechReader.state {
             case .stopped:
                 Button {
-                    speechReader.start(text: attributedText.string, rate: Float(settings?.readAloudRate ?? 0.48))
+                    speechReader.start(
+                        text: attributedText.string,
+                        rate: Float(settings?.readAloudRate ?? 0.48),
+                        voiceIdentifier: settings?.voiceIdentifier
+                    )
                 } label: {
                     Label("Read aloud", systemImage: "play.fill")
                 }
@@ -386,11 +471,17 @@ struct EditorView: View {
         status = chapter.statusValue
         attributedText = AttributedContent.fromRTFData(chapter.attributedData ?? chapter.contentData, settings: settings)
         nextVerse = nextVerseNumber(in: attributedText.string)
+        readerTheme = ReaderTheme(rawValue: settings?.theme ?? "") ?? .parchment
         saveState = .saved
     }
 
     private func scheduleSave(_ text: NSAttributedString) {
         attributedText = text
+        guard settings?.autosaveEnabled != false else {
+            saveTask?.cancel()
+            saveState = .manual
+            return
+        }
         saveState = .saving
         saveTask?.cancel()
         saveTask = Task { @MainActor in
@@ -431,18 +522,66 @@ struct EditorView: View {
     }
 
     private var readerPreviewText: NSAttributedString {
-        guard let currentRange = speechReader.currentRange,
-              currentRange.location + currentRange.length <= attributedText.length else {
-            return attributedText
+        let preview = NSMutableAttributedString(attributedString: attributedText)
+        let fullRange = NSRange(location: 0, length: preview.length)
+        guard fullRange.length > 0 else { return preview }
+
+        let readerSize = CGFloat(settings?.readerFontSize ?? settings?.fontSize ?? 19)
+        preview.addAttribute(.foregroundColor, value: readerTheme.textColor, range: fullRange)
+        preview.enumerateAttribute(.font, in: fullRange) { value, range, _ in
+            let font = (value as? UIFont) ?? SBTheme.bodyUIFont(size: readerSize)
+            preview.addAttribute(.font, value: font.withSize(readerSize), range: range)
         }
 
-        let highlighted = NSMutableAttributedString(attributedString: attributedText)
-        highlighted.addAttribute(
-            .backgroundColor,
-            value: SBTheme.uiGoldSoft.withAlphaComponent(0.58),
-            range: currentRange
-        )
-        return highlighted
+        if let currentRange = speechReader.currentRange,
+           currentRange.location + currentRange.length <= preview.length {
+            preview.addAttribute(
+                .backgroundColor,
+                value: SBTheme.uiGoldSoft.withAlphaComponent(readerTheme == .dark ? 0.34 : 0.58),
+                range: currentRange
+            )
+        }
+
+        return preview
+    }
+}
+
+private enum ReaderTheme: String, CaseIterable, Identifiable {
+    case parchment
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .parchment: return "Parchment"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .parchment: return "book.closed"
+        case .light: return "sun.max"
+        case .dark: return "moon"
+        }
+    }
+
+    var background: Color {
+        switch self {
+        case .parchment: return SBTheme.parchment
+        case .light: return SBTheme.ivory
+        case .dark: return Color(hex: 0x1D1711)
+        }
+    }
+
+    var textColor: UIColor {
+        switch self {
+        case .parchment, .light: return SBTheme.uiInk
+        case .dark: return UIColor(hex: 0xF8EFD8)
+        }
     }
 }
 
@@ -464,11 +603,13 @@ private struct FontSizeOption: Identifiable {
 private enum SaveState {
     case saved
     case saving
+    case manual
 
     var label: String {
         switch self {
         case .saved: return "Saved"
         case .saving: return "Saving..."
+        case .manual: return "Unsaved"
         }
     }
 
@@ -476,6 +617,7 @@ private enum SaveState {
         switch self {
         case .saved: return ScriptoriumPalette.teal
         case .saving: return ScriptoriumPalette.amber
+        case .manual: return SBTheme.crimson
         }
     }
 }
@@ -589,4 +731,27 @@ private extension View {
             self
         }
     }
+}
+
+#Preview("Chapter Editor") {
+    let controller = PersistenceController.preview
+    let context = controller.container.viewContext
+    let chapters = (try? context.fetch(SBChapter.fetchRequest())) ?? []
+    let settings = (try? context.fetch(SBAppSettings.fetchRequest()))?.first
+    let chapter = chapters.first
+    let book = chapter?.book
+
+    return NavigationStack {
+        if let chapter, let book {
+            EditorView(
+                chapter: chapter,
+                book: book,
+                settings: settings,
+                selectedText: .constant("")
+            )
+        } else {
+            EmptyStateView(title: "No Preview Chapter", message: "The preview seed did not create a chapter.", systemImage: "text.book.closed")
+        }
+    }
+    .environment(\.managedObjectContext, context)
 }

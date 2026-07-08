@@ -143,7 +143,6 @@ final class RichTextContext: ObservableObject {
     }
 
     func toggleStrikethrough() {
-<<<<<<< HEAD
         toggleIntegerAttribute(.strikethroughStyle, activeValue: NSUnderlineStyle.single.rawValue)
     }
 
@@ -155,91 +154,6 @@ final class RichTextContext: ObservableObject {
         toggleBaseline(offset: -3, sizeDelta: -3)
     }
 
-=======
-        guard let textView else { return }
-        let range = textView.selectedRange
-        if range.length == 0 {
-            let current = textView.typingAttributes[.strikethroughStyle] as? Int
-            if current == NSUnderlineStyle.single.rawValue {
-                textView.typingAttributes.removeValue(forKey: .strikethroughStyle)
-            } else {
-                textView.typingAttributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
-            }
-            return
-        }
-        let text = mutableText()
-        let existing = text.attribute(.strikethroughStyle, at: range.location, effectiveRange: nil) as? Int
-        if existing == NSUnderlineStyle.single.rawValue {
-            text.removeAttribute(.strikethroughStyle, range: range)
-        } else {
-            text.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: range)
-        }
-        apply(text)
-    }
-
-    func applyAlignment(_ alignment: NSTextAlignment) {
-        guard let textView else { return }
-        let range = paragraphRange(in: textView)
-        let text = mutableText()
-        text.enumerateAttribute(.paragraphStyle, in: range) { value, subrange, _ in
-            let base = (value as? NSParagraphStyle) ?? NSParagraphStyle.default
-            let updated = NSMutableParagraphStyle()
-            updated.setParagraphStyle(base)
-            updated.alignment = alignment
-            text.addAttribute(.paragraphStyle, value: updated, range: subrange)
-        }
-        apply(text, selectedRange: range)
-    }
-
-    func toggleBulletList() {
-        prefixLines(with: "•\t")
-    }
-
-    func toggleNumberedList() {
-        guard let textView else { return }
-        let range = paragraphRange(in: textView)
-        let text = mutableText()
-        let nsString = text.string as NSString
-        let paragraph = nsString.substring(with: range)
-        let lines = paragraph.components(separatedBy: "\n")
-        var counter = 1
-        let rebuilt = lines.map { line -> String in
-            if line.trimmingCharacters(in: .whitespaces).isEmpty { return line }
-            defer { counter += 1 }
-            return "\(counter).\t\(line)"
-        }.joined(separator: "\n")
-        text.replaceCharacters(in: range, with: rebuilt)
-        apply(text, selectedRange: NSRange(location: range.location, length: (rebuilt as NSString).length))
-    }
-
-    func undo() { textView?.undoManager?.undo() }
-    func redo() { textView?.undoManager?.redo() }
-    func clearFormatting() {
-        guard let textView else { return }
-        let range = textView.selectedRange
-        guard range.length > 0 else { return }
-        let text = mutableText()
-        let plain = text.attributedSubstring(from: range).string
-        let replacement = NSAttributedString(string: plain, attributes: AttributedContent.baseAttributes(settings: nil))
-        text.replaceCharacters(in: range, with: replacement)
-        apply(text, selectedRange: NSRange(location: range.location, length: replacement.length))
-    }
-
-    private func prefixLines(with prefix: String) {
-        guard let textView else { return }
-        let range = paragraphRange(in: textView)
-        let text = mutableText()
-        let nsString = text.string as NSString
-        let paragraph = nsString.substring(with: range)
-        let rebuilt = paragraph
-            .components(separatedBy: "\n")
-            .map { $0.isEmpty ? $0 : "\(prefix)\($0)" }
-            .joined(separator: "\n")
-        text.replaceCharacters(in: range, with: rebuilt)
-        apply(text, selectedRange: NSRange(location: range.location, length: (rebuilt as NSString).length))
-
-
->>>>>>> bb4360fd4197a072283b8ac16107699d24f1cc76
     func applyHeading() {
         applyHeading(level: 1)
     }

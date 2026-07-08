@@ -79,6 +79,8 @@ struct SettingsDTO: Codable {
     var defaultItalic: Bool
     var defaultUnderline: Bool
     var readAloudRate: Double?
+    var autosaveEnabled: Bool?
+    var voiceIdentifier: String?
     var theme: String?
 }
 
@@ -92,7 +94,7 @@ enum BackupService {
         settings: SBAppSettings?
     ) -> ScriptoriumBackup {
         ScriptoriumBackup(
-            version: 2,
+            version: 3,
             collections: collections.map {
                 CollectionDTO(
                     id: $0.id,
@@ -169,6 +171,8 @@ enum BackupService {
                     defaultItalic: $0.defaultItalic,
                     defaultUnderline: $0.defaultUnderline,
                     readAloudRate: $0.readAloudRate,
+                    autosaveEnabled: $0.autosaveEnabled,
+                    voiceIdentifier: $0.voiceIdentifier,
                     theme: $0.theme
                 )
             }
@@ -278,6 +282,8 @@ enum BackupService {
             settings.defaultItalic = dto.defaultItalic
             settings.defaultUnderline = dto.defaultUnderline
             settings.readAloudRate = dto.readAloudRate ?? 0.48
+            settings.autosaveEnabled = dto.autosaveEnabled ?? true
+            settings.voiceIdentifier = dto.voiceIdentifier
             settings.theme = dto.theme ?? "parchment"
             settings.createdAt = Date()
             settings.updatedAt = Date()

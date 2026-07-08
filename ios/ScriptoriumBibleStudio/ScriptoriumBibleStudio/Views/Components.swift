@@ -226,6 +226,61 @@ struct EmptyStateView: View {
     }
 }
 
+struct LoadingStateView: View {
+    let title: String
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ProgressView()
+                .tint(SBTheme.gold)
+                .controlSize(.large)
+            Text(title)
+                .font(SBTheme.body(22, weight: .semibold))
+                .foregroundStyle(SBTheme.primary)
+            Text(message)
+                .font(.callout)
+                .foregroundStyle(SBTheme.mutedForeground)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 320)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(30)
+    }
+}
+
+struct ErrorStateView: View {
+    let title: String
+    let message: String
+    var retryTitle = "Try Again"
+    var retry: (() -> Void)?
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(SBTheme.crimson)
+            Text(title)
+                .font(SBTheme.body(22, weight: .semibold))
+                .foregroundStyle(SBTheme.primary)
+                .multilineTextAlignment(.center)
+            Text(message)
+                .font(.callout)
+                .foregroundStyle(SBTheme.mutedForeground)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 360)
+            if let retry {
+                Button(retryTitle, action: retry)
+                    .buttonStyle(.borderedProminent)
+                    .tint(SBTheme.primary)
+                    .padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(30)
+    }
+}
+
 struct AttributedPreview: UIViewRepresentable {
     let text: NSAttributedString
     var isScrollEnabled = true
@@ -285,6 +340,41 @@ struct ExportMenuButton: View {
     private func export(_ kind: ExportKind) {
         do {
             shareItem = ShareItem(url: try ExportService.chapterURL(chapter: chapter, book: book, kind: kind))
+        } catch {
+            exportError = error.localizedDescription
+        }
+    }
+}
+
+struct PlainTextShareButton: View {
+    let chapter: SBChapter
+    let book: SBBook?
+
+    @State private var shareItem: ShareItem?
+    @State private var exportError: String?
+
+    var body: some View {
+        Button {
+            exportPlainText()
+        } label: {
+            Label("Share TXT", systemImage: "doc.plaintext")
+        }
+        .sheet(item: $shareItem) { item in
+            ActivityView(activityItems: [item.url])
+        }
+        .alert("Plain Text Export Failed", isPresented: Binding(
+            get: { exportError != nil },
+            set: { if !$0 { exportError = nil } }
+        )) {
+            Button("OK", role: .cancel) { exportError = nil }
+        } message: {
+            Text(exportError ?? "")
+        }
+    }
+
+    private func exportPlainText() {
+        do {
+            shareItem = ShareItem(url: try ExportService.chapterURL(chapter: chapter, book: book, kind: .text))
         } catch {
             exportError = error.localizedDescription
         }

@@ -16,6 +16,8 @@ enum ScriptoriumSeed {
         settings.defaultItalic = false
         settings.defaultUnderline = false
         settings.readAloudRate = 0.48
+        settings.autosaveEnabled = true
+        settings.voiceIdentifier = nil
         settings.theme = "parchment"
         settings.createdAt = now
         settings.updatedAt = now
