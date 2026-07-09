@@ -34,7 +34,19 @@ enum AttributedContent {
     }
 
     static func fromRTFData(_ data: Data?, settings: SBAppSettings? = nil) -> NSAttributedString {
-        guard let data else { return makeEmpty(settings: settings) }
+        guard let data, !data.isEmpty else { return makeEmpty(settings: settings) }
+
+        // Preferred format: NSKeyedArchiver — round-trips ALL attributes,
+        // including custom keys (highlight theme, foreground colour role),
+        // baseline offset, kerning, background colours, and paragraph styles.
+        if let unarchived = try? NSKeyedUnarchiver.unarchivedObject(
+            ofClasses: [NSAttributedString.self, NSMutableAttributedString.self],
+            from: data
+        ) as? NSAttributedString {
+            return unarchived
+        }
+
+        // Legacy fallback: chapters that were saved as RTF before the switch.
         if let attributed = try? NSAttributedString(
             data: data,
             options: [.documentType: NSAttributedString.DocumentType.rtf],
@@ -42,19 +54,25 @@ enum AttributedContent {
         ) {
             return attributed
         }
+
         if let fallback = String(data: data, encoding: .utf8) {
             return NSAttributedString(string: fallback, attributes: baseAttributes(settings: settings))
         }
         return makeEmpty(settings: settings)
     }
 
+    /// Encodes attributed text for Core Data. Uses `NSKeyedArchiver` so custom
+    /// attributes such as `.scriptoriumForegroundColorRole` and
+    /// `.scriptoriumHighlightTheme` survive save/reload. Returns `nil` only
+    /// when encoding truly fails; callers must NOT overwrite the stored value
+    /// with `nil` on failure.
     static func rtfData(from attributedString: NSAttributedString) -> Data? {
         guard attributedString.length > 0 else {
             return Data()
         }
-        return try? attributedString.data(
-            from: NSRange(location: 0, length: attributedString.length),
-            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+        return try? NSKeyedArchiver.archivedData(
+            withRootObject: attributedString,
+            requiringSecureCoding: true
         )
     }
 

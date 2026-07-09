@@ -550,8 +550,12 @@ struct EditorView: View {
 
         guard !Task.isCancelled else { return }
 
-        chapter.contentData = data
-        chapter.attributedData = data
+        // Only overwrite the persisted blob when encoding actually succeeded.
+        // Otherwise a transient encoder failure would wipe the chapter body.
+        if let data {
+            chapter.contentData = data
+            chapter.attributedData = data
+        }
         chapter.plainText = plainText
         chapter.updatedAt = Date()
 
@@ -571,9 +575,10 @@ struct EditorView: View {
     private func persistSynchronouslyOnDisappear() {
         let snapshot = draftBuffer.currentText(fallback: attributedText)
         guard draftBuffer.hasPendingChanges else { return }
-        let data = AttributedContent.rtfData(from: snapshot)
-        chapter.contentData = data
-        chapter.attributedData = data
+        if let data = AttributedContent.rtfData(from: snapshot) {
+            chapter.contentData = data
+            chapter.attributedData = data
+        }
         chapter.plainText = snapshot.string
         chapter.updatedAt = Date()
         do {
