@@ -30,7 +30,6 @@ struct StudioView: View {
     @State private var selectedChapterID: String?
     @State private var selectedText = ""
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
-    @State private var compactEditorPane: CompactEditorPane = .write
 
     private var activeChapter: SBChapter? {
         if let selectedChapterID,
@@ -74,11 +73,6 @@ struct StudioView: View {
         .onAppear {
             if selectedChapterID == nil {
                 selectedChapterID = chapters.first?.id
-            }
-        }
-        .onChange(of: selectedSection) { _, newValue in
-            if newValue == .editor {
-                compactEditorPane = .write
             }
         }
     }
@@ -190,34 +184,12 @@ struct StudioView: View {
     @ViewBuilder
     private var compactEditorContent: some View {
         if let activeChapter, let activeBook {
-            VStack(spacing: 0) {
-                Picker("Editor workspace", selection: $compactEditorPane) {
-                    ForEach(CompactEditorPane.allCases) { pane in
-                        Label(pane.title, systemImage: pane.systemImage).tag(pane)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 14)
-                .padding(.top, 10)
-                .padding(.bottom, 8)
-                .background(.bar)
-
-                if compactEditorPane == .write {
-                    EditorView(
-                        chapter: activeChapter,
-                        book: activeBook,
-                        settings: settings,
-                        selectedText: $selectedText
-                    )
-                } else {
-                    InspectorView(
-                        chapter: activeChapter,
-                        book: activeBook,
-                        selectedText: $selectedText,
-                        bookmarks: Array(bookmarks)
-                    )
-                }
-            }
+            EditorView(
+                chapter: activeChapter,
+                book: activeBook,
+                settings: settings,
+                selectedText: $selectedText
+            )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             EmptyStateView(
@@ -283,28 +255,6 @@ struct StudioView: View {
     private func openChapter(_ chapter: SBChapter) {
         selectedChapterID = chapter.id
         selectedSection = .editor
-        compactEditorPane = .write
-    }
-}
-
-private enum CompactEditorPane: String, CaseIterable, Identifiable {
-    case write
-    case tools
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .write: return "Write"
-        case .tools: return "Tools"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .write: return "pencil.line"
-        case .tools: return "sidebar.right"
-        }
     }
 }
 

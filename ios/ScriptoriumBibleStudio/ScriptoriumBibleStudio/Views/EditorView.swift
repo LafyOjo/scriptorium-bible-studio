@@ -23,6 +23,7 @@ struct EditorView: View {
     @State private var titleText = ""
     @State private var status: ChapterStatus = .notStarted
     @State private var showFontSheet = false
+    @State private var showMoreToolsSheet = false
     @State private var selectedColor = SBTheme.uiInk
     @State private var readerTheme: ReaderTheme = .parchment
     @State private var wordCountValue = 0
@@ -90,22 +91,39 @@ struct EditorView: View {
         .navigationTitle("\(book.name) \(chapter.number)")
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button {
-                    persistNow(force: true)
-                } label: {
-                    Label("Save", systemImage: "tray.and.arrow.down")
-                }
-                PlainTextShareButton(chapter: chapter, book: book)
-                ExportMenuButton(chapter: chapter, book: book)
-                Button {
-                    showFontSheet = true
-                } label: {
-                    Label("Fonts", systemImage: "textformat.size")
+                if isCompact {
+                    DocumentMenuButton(
+                        chapter: chapter,
+                        book: book,
+                        save: { persistNow(force: true) },
+                        showFonts: { showFontSheet = true }
+                    )
+                } else {
+                    Button {
+                        persistNow(force: true)
+                    } label: {
+                        Label("Save", systemImage: "tray.and.arrow.down")
+                    }
+                    PlainTextShareButton(chapter: chapter, book: book)
+                    ExportMenuButton(chapter: chapter, book: book)
+                    Button {
+                        showFontSheet = true
+                    } label: {
+                        Label("Fonts", systemImage: "textformat.size")
+                    }
                 }
             }
         }
         .sheet(isPresented: $showFontSheet) {
             FontControlsSheet(settings: settings, richTextContext: richTextContext)
+        }
+        .sheet(isPresented: $showMoreToolsSheet) {
+            MoreToolsSheet(
+                settings: settings,
+                richTextContext: richTextContext,
+                nextVerse: nextVerse,
+                insertVerse: insertNextVerseNumber
+            )
         }
         .onAppear(perform: loadChapter)
         .onDisappear {
@@ -151,16 +169,20 @@ struct EditorView: View {
                 }
             }
 
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 12) {
-                    readAloudControls
-                    Spacer(minLength: 12)
-                    writingMeta
-                }
+            if isCompact {
+                writingMeta
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) {
+                        readAloudControls
+                        Spacer(minLength: 12)
+                        writingMeta
+                    }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    readAloudControls
-                    writingMeta
+                    VStack(alignment: .leading, spacing: 8) {
+                        readAloudControls
+                        writingMeta
+                    }
                 }
             }
         }
@@ -277,8 +299,7 @@ struct EditorView: View {
                 Divider().frame(height: 24)
 
                 Button {
-                    richTextContext.insertVerseNumber(nextVerse)
-                    nextVerse += 1
+                    insertNextVerseNumber()
                 } label: {
                     Label("v\(nextVerse)", systemImage: "number")
                 }
@@ -375,9 +396,74 @@ struct EditorView: View {
         VStack(spacing: 0) {
             GoldDivider()
                 .padding(.top, 8)
-            formattingToolbar
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                CompactToolButton(title: "Undo", systemImage: "arrow.uturn.backward") {
+                    richTextContext.undo()
+                }
+                CompactToolButton(title: "Redo", systemImage: "arrow.uturn.forward") {
+                    richTextContext.redo()
+                }
+                CompactToolButton(title: "Bold", systemImage: "bold") {
+                    richTextContext.toggleBold()
+                }
+                CompactToolButton(title: "Italic", systemImage: "italic") {
+                    richTextContext.toggleItalic()
+                }
+                CompactToolButton(title: "Underline", systemImage: "underline") {
+                    richTextContext.toggleUnderline()
+                }
+
+                Menu {
+                    ForEach(TextColorOption.all) { option in
+                        colorButton(option)
+                    }
+                    Divider()
+                    Button {
+                        selectedColor = SBTheme.uiInk
+                        richTextContext.resetForegroundColor()
+                    } label: {
+                        Label("Reset Text Colour", systemImage: "xmark.circle")
+                    }
+                    .accessibilityLabel("Reset text colour to default ink")
+                } label: {
+                    CompactToolLabel(
+                        title: "Colour",
+                        subtitle: selectedColorLabel,
+                        systemImage: "paintpalette",
+                        swatch: Color(uiColor: selectedColor)
+                    )
+                }
+                .accessibilityLabel("Colour. Current colour \(selectedColorLabel)")
+
+                Menu {
+                    ForEach(HighlightTheme.allCases) { theme in
+                        Button {
+                            richTextContext.applyHighlight(theme)
+                            ScriptoriumActions.recordHighlightTheme(theme, in: chapter, context: viewContext)
+                        } label: {
+                            HStack {
+                                Circle()
+                                    .fill(theme.color)
+                                    .frame(width: 14, height: 14)
+                                    .overlay(Circle().stroke(SBTheme.border, lineWidth: 1))
+                                Text(theme.label)
+                            }
+                        }
+                        .accessibilityLabel("Highlight \(theme.label)")
+                    }
+                } label: {
+                    CompactToolLabel(title: "Highlight", subtitle: "Themes", systemImage: "highlighter")
+                }
+                .accessibilityLabel("Highlight text")
+
+                CompactToolButton(title: "More", systemImage: "ellipsis.circle") {
+                    showMoreToolsSheet = true
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
         }
-        .background(.ultraThinMaterial)
+        .background(.bar)
     }
 
     private var readerControlStrip: some View {
@@ -425,7 +511,7 @@ struct EditorView: View {
             case .stopped:
                 Button {
                     speechReader.start(
-                        text: attributedText.string,
+                        text: draftBuffer.currentText(fallback: attributedText).string,
                         rate: Float(settings?.readAloudRate ?? 0.48),
                         voiceIdentifier: settings?.voiceIdentifier
                     )
@@ -612,6 +698,15 @@ struct EditorView: View {
         FontOption.all.first { $0.id == fontName }?.label ?? "Font"
     }
 
+    private var selectedColorLabel: String {
+        TextColorOption.all.first { $0.uiColor.isVisuallyEqual(to: selectedColor) }?.label ?? "Custom"
+    }
+
+    private func insertNextVerseNumber() {
+        richTextContext.insertVerseNumber(nextVerse)
+        nextVerse += 1
+    }
+
     private var readerPreviewText: NSAttributedString {
         let preview = NSMutableAttributedString(attributedString: draftBuffer.currentText(fallback: attributedText))
         let fullRange = NSRange(location: 0, length: preview.length)
@@ -737,6 +832,317 @@ private struct ColourMenuLabel: View {
             }
         }
         .accessibilityLabel("Text colour. Current colour selected.")
+    }
+}
+
+private struct CompactToolButton: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            CompactToolLabel(title: title, systemImage: systemImage)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .help(title)
+    }
+}
+
+private struct CompactToolLabel: View {
+    let title: String
+    var subtitle: String?
+    let systemImage: String
+    var swatch: Color?
+
+    var body: some View {
+        VStack(spacing: 4) {
+            ZStack(alignment: .bottomTrailing) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16, weight: .semibold))
+                if let swatch {
+                    Circle()
+                        .fill(swatch)
+                        .frame(width: 11, height: 11)
+                        .overlay(Circle().stroke(.white, lineWidth: 1))
+                        .offset(x: 6, y: 4)
+                }
+            }
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(SBTheme.mutedForeground)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+            }
+        }
+        .foregroundStyle(SBTheme.primary)
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: subtitle == nil ? 50 : 58)
+        .padding(.horizontal, 4)
+        .background(SBTheme.ivory.opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(SBTheme.border, lineWidth: 1)
+        )
+    }
+}
+
+private struct DocumentMenuButton: View {
+    let chapter: SBChapter
+    let book: SBBook?
+    let save: () -> Void
+    let showFonts: () -> Void
+
+    @State private var shareItem: ShareItem?
+    @State private var exportError: String?
+
+    var body: some View {
+        Menu {
+            Section("Document") {
+                Button(action: save) {
+                    Label("Save Now", systemImage: "tray.and.arrow.down")
+                }
+                Button(action: showFonts) {
+                    Label("Fonts And Sizes", systemImage: "textformat.size")
+                }
+            }
+
+            Section("Share") {
+                Button {
+                    export(.text)
+                } label: {
+                    Label("Share Plain Text", systemImage: "doc.plaintext")
+                }
+            }
+
+            Section("Export") {
+                ForEach(ExportKind.allCases) { kind in
+                    Button {
+                        export(kind)
+                    } label: {
+                        Label("Export \(kind.label)", systemImage: kind.systemImage)
+                    }
+                }
+            }
+        } label: {
+            Label("Document", systemImage: "doc.text")
+        }
+        .accessibilityLabel("Document menu. Save, share, export and fonts.")
+        .sheet(item: $shareItem) { item in
+            ActivityView(activityItems: [item.url])
+        }
+        .alert("Document action failed", isPresented: Binding(
+            get: { exportError != nil },
+            set: { if !$0 { exportError = nil } }
+        )) {
+            Button("OK", role: .cancel) { exportError = nil }
+        } message: {
+            Text(exportError ?? "")
+        }
+    }
+
+    private func export(_ kind: ExportKind) {
+        do {
+            shareItem = ShareItem(url: try ExportService.chapterURL(chapter: chapter, book: book, kind: kind))
+        } catch {
+            exportError = error.localizedDescription
+        }
+    }
+}
+
+private struct MoreToolsSheet: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
+
+    let settings: SBAppSettings?
+    let richTextContext: RichTextContext
+    let nextVerse: Int
+    let insertVerse: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    MoreToolsSection(title: "Text Style", systemImage: "textformat") {
+                        MoreToolButton("Strikethrough", systemImage: "strikethrough") { richTextContext.toggleStrikethrough() }
+                        MoreToolButton("Superscript", systemImage: "textformat.superscript") { richTextContext.toggleSuperscript() }
+                        MoreToolButton("Subscript", systemImage: "textformat.subscript") { richTextContext.toggleSubscript() }
+                        MoreToolButton("Uppercase", systemImage: "character.cursor.ibeam") { richTextContext.uppercaseSelection() }
+                        MoreToolButton("Small Caps", systemImage: "textformat.alt") { richTextContext.applySmallCaps() }
+                        MoreToolButton("Clear Formatting", systemImage: "eraser") { richTextContext.clearFormatting() }
+                    }
+
+                    MoreToolsSection(title: "Scripture Structure", systemImage: "text.book.closed") {
+                        MoreToolButton("Heading 1", systemImage: "textformat.size.larger") { richTextContext.applyHeading(level: 1) }
+                        MoreToolButton("Heading 2", systemImage: "textformat.size") { richTextContext.applyHeading(level: 2) }
+                        MoreToolButton("Heading 3", systemImage: "textformat") { richTextContext.applyHeading(level: 3) }
+                        MoreToolButton("Paragraph", systemImage: "paragraphsign") { richTextContext.applyParagraph() }
+                        MoreToolButton("Preformatted", systemImage: "curlybraces") { richTextContext.applyPreformatted() }
+                        MoreToolButton("Verse \(nextVerse)", systemImage: "number") { insertVerse() }
+                        MoreToolButton("Section Title", systemImage: "text.aligncenter") { richTextContext.insertSectionTitle() }
+                        MoreToolButton("Footnote", systemImage: "asterisk") { richTextContext.insertFootnoteMarker() }
+                        MoreToolButton("Link", systemImage: "link") { richTextContext.insertLinkPlaceholder() }
+                    }
+
+                    MoreToolsSection(title: "Paragraph Layout", systemImage: "increase.indent") {
+                        MoreToolButton("Quote", systemImage: "quote.opening") { richTextContext.applyQuote() }
+                        MoreToolButton("Indent", systemImage: "increase.indent") { richTextContext.adjustIndent(by: 18) }
+                        MoreToolButton("Outdent", systemImage: "decrease.indent") { richTextContext.adjustIndent(by: -18) }
+                        MoreToolButton("Align Left", systemImage: "text.alignleft") { richTextContext.applyAlignment(.left) }
+                        MoreToolButton("Align Centre", systemImage: "text.aligncenter") { richTextContext.applyAlignment(.center) }
+                        MoreToolButton("Align Right", systemImage: "text.alignright") { richTextContext.applyAlignment(.right) }
+                        MoreToolButton("Justify", systemImage: "text.justify") { richTextContext.applyAlignment(.justified) }
+                    }
+
+                    MoreToolsSection(title: "Lists", systemImage: "list.bullet") {
+                        MoreToolButton("Bulleted List", systemImage: "list.bullet") { richTextContext.toggleList(ordered: false) }
+                        MoreToolButton("Numbered List", systemImage: "list.number") { richTextContext.toggleList(ordered: true) }
+                    }
+
+                    MoreToolsSection(title: "Fonts", systemImage: "textformat.size") {
+                        Menu {
+                            ForEach(FontOption.all) { option in
+                                Button(option.label) {
+                                    richTextContext.applyFont(name: option.id)
+                                }
+                            }
+                        } label: {
+                            MoreToolMenuLabel(
+                                title: "Font",
+                                detail: settings.flatMap { fontLabel($0.fontName) } ?? "Typeface",
+                                systemImage: "textformat"
+                            )
+                        }
+                        .accessibilityLabel("Font")
+
+                        Menu {
+                            ForEach(FontSizeOption.all) { option in
+                                Button(option.label) {
+                                    settings?.fontSize = option.size
+                                    settings?.readerFontSize = option.size
+                                    settings?.updatedAt = Date()
+                                    if settings != nil {
+                                        ScriptoriumActions.save(viewContext)
+                                    }
+                                    richTextContext.applyFontSize(CGFloat(option.size))
+                                }
+                            }
+                        } label: {
+                            MoreToolMenuLabel(
+                                title: "Font Size",
+                                detail: settings.map { "\(Int($0.fontSize)) pt" } ?? "Size",
+                                systemImage: "textformat.size"
+                            )
+                        }
+                        .accessibilityLabel("Font size")
+                    }
+                }
+                .padding(16)
+            }
+            .navigationTitle("More Tools")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func fontLabel(_ fontName: String) -> String {
+        FontOption.all.first { $0.id == fontName }?.label ?? "Font"
+    }
+}
+
+private struct MoreToolsSection<Content: View>: View {
+    let title: String
+    let systemImage: String
+    @ViewBuilder var content: Content
+
+    init(title: String, systemImage: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.systemImage = systemImage
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: systemImage)
+                .font(.headline)
+                .foregroundStyle(SBTheme.primary)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 10)], spacing: 10) {
+                content
+            }
+        }
+        .padding(14)
+        .background(SBTheme.ivory.opacity(0.9), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(SBTheme.border, lineWidth: 1)
+        )
+    }
+}
+
+private struct MoreToolButton: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+
+    init(_ title: String, systemImage: String, action: @escaping () -> Void) {
+        self.title = title
+        self.systemImage = systemImage
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.callout.weight(.medium))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: 44)
+                .lineLimit(2)
+        }
+        .buttonStyle(.bordered)
+        .tint(SBTheme.primary)
+        .accessibilityLabel(title)
+        .help(title)
+    }
+}
+
+private struct MoreToolMenuLabel: View {
+    let title: String
+    let detail: String
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.callout.weight(.medium))
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(SBTheme.mutedForeground)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: 44)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(SBTheme.parchment.opacity(0.46), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(SBTheme.border, lineWidth: 1)
+        )
     }
 }
 
