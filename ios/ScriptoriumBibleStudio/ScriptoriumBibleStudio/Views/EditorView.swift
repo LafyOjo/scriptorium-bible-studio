@@ -13,6 +13,7 @@ struct EditorView: View {
 
     @StateObject private var richTextContext = RichTextContext()
     @StateObject private var speechReader = SpeechReader()
+    @StateObject private var draftBuffer = EditorDraftBuffer()
 
     @State private var attributedText = NSAttributedString()
     @State private var mode: EditorMode = .write
@@ -24,6 +25,8 @@ struct EditorView: View {
     @State private var showFontSheet = false
     @State private var selectedColor = SBTheme.uiInk
     @State private var readerTheme: ReaderTheme = .parchment
+    @State private var wordCountValue = 0
+    @State private var saveError: EditorSaveError?
 
     private var isCompact: Bool {
         horizontalSizeClass == .compact
@@ -33,6 +36,14 @@ struct EditorView: View {
         VStack(spacing: 0) {
             editorHeader
             Divider()
+            if let saveError {
+                SaveErrorBanner(error: saveError) {
+                    persistNow(force: true)
+                } dismiss: {
+                    self.saveError = nil
+                }
+                Divider()
+            }
             if mode == .write && !isCompact {
                 formattingToolbar
                 Divider()
@@ -48,8 +59,11 @@ struct EditorView: View {
                         selectedText: $selectedText,
                         context: richTextContext,
                         settings: settings,
+                        documentID: chapter.id,
                         onTextChange: scheduleSave
-                    )
+                    ) { color in
+                        selectedColor = color ?? SBTheme.uiInk
+                    }
                     .padding(.horizontal, isCompact ? 14 : 22)
                     .padding(.vertical, isCompact ? 12 : 18)
                 } else {
@@ -77,8 +91,7 @@ struct EditorView: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
-                    persist(attributedText)
-                    saveState = .saved
+                    persistNow(force: true)
                 } label: {
                     Label("Save", systemImage: "tray.and.arrow.down")
                 }
@@ -97,7 +110,7 @@ struct EditorView: View {
         .onAppear(perform: loadChapter)
         .onDisappear {
             saveTask?.cancel()
-            persist(attributedText)
+            persistSynchronouslyOnDisappear()
             speechReader.stop()
         }
         .onChange(of: chapter.objectID) { _, _ in
@@ -116,6 +129,7 @@ struct EditorView: View {
             ScriptoriumActions.save(viewContext)
         }
         .onChange(of: readerTheme) { _, value in
+            settings?.readerTheme = value.rawValue
             settings?.theme = value.rawValue
             settings?.updatedAt = Date()
             ScriptoriumActions.save(viewContext)
@@ -199,7 +213,7 @@ struct EditorView: View {
 
     private var writingMeta: some View {
         HStack(spacing: 12) {
-            Label("\(wordCount(attributedText.string)) words", systemImage: "text.word.spacing")
+            Label("\(wordCountValue) words", systemImage: "text.word.spacing")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -291,13 +305,19 @@ struct EditorView: View {
                 .buttonStyle(.bordered)
 
                 Menu {
-                    colorButton("Ink", color: SBTheme.uiInk)
-                    colorButton("Primary", color: SBTheme.uiPrimary)
-                    colorButton("Gold", color: SBTheme.uiGold)
-                    colorButton("Crimson", color: SBTheme.uiCrimson)
-                    colorButton("Muted", color: SBTheme.uiMutedForeground)
+                    ForEach(TextColorOption.all) { option in
+                        colorButton(option)
+                    }
+                    Divider()
+                    Button {
+                        selectedColor = SBTheme.uiInk
+                        richTextContext.resetForegroundColor()
+                    } label: {
+                        Label("Reset Text Colour", systemImage: "xmark.circle")
+                    }
+                    .accessibilityLabel("Reset text colour to default ink")
                 } label: {
-                    Label("Colour", systemImage: "paintpalette")
+                    ColourMenuLabel(color: selectedColor)
                 }
                 .buttonStyle(.bordered)
 
@@ -457,26 +477,41 @@ struct EditorView: View {
         .help(title)
     }
 
-    private func colorButton(_ title: String, color: UIColor) -> some View {
+    private func colorButton(_ option: TextColorOption) -> some View {
         Button {
-            selectedColor = color
-            richTextContext.applyForegroundColor(color)
+            selectedColor = option.uiColor
+            richTextContext.applyForegroundColor(option.uiColor)
         } label: {
-            Label(title, systemImage: "circle.fill")
+            HStack {
+                Circle()
+                    .fill(Color(uiColor: option.uiColor))
+                    .frame(width: 14, height: 14)
+                    .overlay(Circle().stroke(SBTheme.border, lineWidth: 1))
+                Text(option.label)
+                if option.uiColor.isVisuallyEqual(to: selectedColor) {
+                    Spacer()
+                    Image(systemName: "checkmark")
+                }
+            }
         }
+        .accessibilityLabel("Text colour \(option.label)")
     }
 
     private func loadChapter() {
         titleText = chapter.title
         status = chapter.statusValue
         attributedText = AttributedContent.fromRTFData(chapter.attributedData ?? chapter.contentData, settings: settings)
+        draftBuffer.load(attributedText)
+        wordCountValue = wordCount(attributedText.string)
         nextVerse = nextVerseNumber(in: attributedText.string)
-        readerTheme = ReaderTheme(rawValue: settings?.theme ?? "") ?? .parchment
+        readerTheme = ReaderTheme(rawValue: settings?.readerTheme ?? settings?.theme ?? "") ?? .parchment
         saveState = .saved
+        saveError = nil
     }
 
     private func scheduleSave(_ text: NSAttributedString) {
-        attributedText = text
+        draftBuffer.update(text)
+        wordCountValue = wordCount(text.string)
         guard settings?.autosaveEnabled != false else {
             saveTask?.cancel()
             saveState = .manual
@@ -484,21 +519,72 @@ struct EditorView: View {
         }
         saveState = .saving
         saveTask?.cancel()
+        let snapshot = text.copy() as? NSAttributedString ?? NSAttributedString(attributedString: text)
+        let delay = snapshot.length > 25_000 ? 1_500 : 1_100
         saveTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(for: .milliseconds(delay))
             guard !Task.isCancelled else { return }
-            persist(text)
-            saveState = .saved
+            await persistSnapshot(snapshot, force: false)
         }
     }
 
-    private func persist(_ text: NSAttributedString) {
-        let data = AttributedContent.rtfData(from: text)
+    private func persistNow(force: Bool) {
+        saveTask?.cancel()
+        let snapshot = draftBuffer.currentText(fallback: attributedText)
+        saveState = .saving
+        Task { @MainActor in
+            await persistSnapshot(snapshot, force: force)
+        }
+    }
+
+    private func persistSnapshot(_ text: NSAttributedString, force: Bool) async {
+        guard force || draftBuffer.hasPendingChanges else {
+            saveState = .saved
+            return
+        }
+
+        let plainText = text.string
+        let data = await Task.detached(priority: .utility) {
+            AttributedContent.rtfData(from: text)
+        }.value
+
+        guard !Task.isCancelled else { return }
+
         chapter.contentData = data
         chapter.attributedData = data
-        chapter.plainText = text.string
+        chapter.plainText = plainText
         chapter.updatedAt = Date()
-        ScriptoriumActions.save(viewContext)
+
+        do {
+            try ScriptoriumActions.saveThrowing(viewContext)
+            attributedText = text
+            draftBuffer.markPersisted(text)
+            wordCountValue = wordCount(plainText)
+            saveState = .saved
+            saveError = nil
+        } catch {
+            saveState = .failed
+            saveError = EditorSaveError(message: error.localizedDescription)
+        }
+    }
+
+    private func persistSynchronouslyOnDisappear() {
+        let snapshot = draftBuffer.currentText(fallback: attributedText)
+        guard draftBuffer.hasPendingChanges else { return }
+        let data = AttributedContent.rtfData(from: snapshot)
+        chapter.contentData = data
+        chapter.attributedData = data
+        chapter.plainText = snapshot.string
+        chapter.updatedAt = Date()
+        do {
+            try ScriptoriumActions.saveThrowing(viewContext)
+            draftBuffer.markPersisted(snapshot)
+            saveState = .saved
+            saveError = nil
+        } catch {
+            saveState = .failed
+            saveError = EditorSaveError(message: error.localizedDescription)
+        }
     }
 
     private func wordCount(_ string: String) -> Int {
@@ -522,12 +608,24 @@ struct EditorView: View {
     }
 
     private var readerPreviewText: NSAttributedString {
-        let preview = NSMutableAttributedString(attributedString: attributedText)
+        let preview = NSMutableAttributedString(attributedString: draftBuffer.currentText(fallback: attributedText))
         let fullRange = NSRange(location: 0, length: preview.length)
         guard fullRange.length > 0 else { return preview }
 
         let readerSize = CGFloat(settings?.readerFontSize ?? settings?.fontSize ?? 19)
-        preview.addAttribute(.foregroundColor, value: readerTheme.textColor, range: fullRange)
+        preview.enumerateAttributes(in: fullRange) { attributes, range, _ in
+            let color = attributes[.foregroundColor] as? UIColor
+            let role = attributes[.scriptoriumForegroundColorRole]
+            if AttributedContent.shouldPreserveForegroundColor(color, role: role), let color {
+                preview.addAttribute(
+                    .foregroundColor,
+                    value: AttributedContent.readerColor(color, onDarkBackground: readerTheme == .dark),
+                    range: range
+                )
+            } else {
+                preview.addAttribute(.foregroundColor, value: readerTheme.textColor, range: range)
+            }
+        }
         preview.enumerateAttribute(.font, in: fullRange) { value, range, _ in
             let font = (value as? UIFont) ?? SBTheme.bodyUIFont(size: readerSize)
             preview.addAttribute(.font, value: font.withSize(readerSize), range: range)
@@ -600,16 +698,55 @@ private struct FontSizeOption: Identifiable {
     ]
 }
 
+private struct TextColorOption: Identifiable {
+    let id: String
+    let label: String
+    let uiColor: UIColor
+
+    static let all: [TextColorOption] = [
+        TextColorOption(id: "ink", label: "Ink", uiColor: SBTheme.uiInk),
+        TextColorOption(id: "primary", label: "Deep Brown", uiColor: SBTheme.uiPrimary),
+        TextColorOption(id: "gold", label: "Gold", uiColor: SBTheme.uiGold),
+        TextColorOption(id: "crimson", label: "Crimson", uiColor: SBTheme.uiCrimson),
+        TextColorOption(id: "mercy", label: "Mercy Green", uiColor: UIColor(hex: 0x2F5230)),
+        TextColorOption(id: "prophecy", label: "Prophecy Blue", uiColor: UIColor(hex: 0x1F3B6B)),
+        TextColorOption(id: "royal", label: "Royal Purple", uiColor: UIColor(hex: 0x5C2A72)),
+        TextColorOption(id: "muted", label: "Muted", uiColor: SBTheme.uiMutedForeground),
+    ]
+}
+
+private struct ColourMenuLabel: View {
+    let color: UIColor
+
+    var body: some View {
+        Label {
+            Text("Colour")
+        } icon: {
+            ZStack(alignment: .bottomTrailing) {
+                Image(systemName: "paintpalette")
+                Circle()
+                    .fill(Color(uiColor: color))
+                    .frame(width: 9, height: 9)
+                    .overlay(Circle().stroke(.white, lineWidth: 1))
+                    .offset(x: 4, y: 4)
+            }
+        }
+        .accessibilityLabel("Text colour. Current colour selected.")
+    }
+}
+
 private enum SaveState {
     case saved
     case saving
     case manual
+    case failed
 
     var label: String {
         switch self {
         case .saved: return "Saved"
         case .saving: return "Saving..."
         case .manual: return "Unsaved"
+        case .failed: return "Save Failed"
         }
     }
 
@@ -618,7 +755,91 @@ private enum SaveState {
         case .saved: return ScriptoriumPalette.teal
         case .saving: return ScriptoriumPalette.amber
         case .manual: return SBTheme.crimson
+        case .failed: return SBTheme.crimson
         }
+    }
+}
+
+private extension UIColor {
+    func isVisuallyEqual(to other: UIColor, tolerance: CGFloat = 0.035) -> Bool {
+        let left = rgba
+        let right = other.rgba
+        return abs(left.red - right.red) <= tolerance
+            && abs(left.green - right.green) <= tolerance
+            && abs(left.blue - right.blue) <= tolerance
+            && abs(left.alpha - right.alpha) <= tolerance
+    }
+
+    var rgba: (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return (red, green, blue, alpha)
+    }
+}
+
+private final class EditorDraftBuffer: ObservableObject {
+    private var latest = NSAttributedString()
+    private(set) var hasPendingChanges = false
+
+    func load(_ text: NSAttributedString) {
+        latest = text.copy() as? NSAttributedString ?? NSAttributedString(attributedString: text)
+        hasPendingChanges = false
+    }
+
+    func update(_ text: NSAttributedString) {
+        latest = text.copy() as? NSAttributedString ?? NSAttributedString(attributedString: text)
+        hasPendingChanges = true
+    }
+
+    func markPersisted(_ text: NSAttributedString) {
+        latest = text.copy() as? NSAttributedString ?? NSAttributedString(attributedString: text)
+        hasPendingChanges = false
+    }
+
+    func currentText(fallback: NSAttributedString) -> NSAttributedString {
+        latest.length == 0 && !hasPendingChanges ? fallback : latest
+    }
+}
+
+private struct EditorSaveError: Identifiable {
+    let id = UUID()
+    let message: String
+}
+
+private struct SaveErrorBanner: View {
+    let error: EditorSaveError
+    let retry: () -> Void
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(SBTheme.crimson)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Autosave could not finish")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SBTheme.primary)
+                Text(error.message)
+                    .font(.caption2)
+                    .foregroundStyle(SBTheme.mutedForeground)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 8)
+            Button("Retry", action: retry)
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.bordered)
+            Button(action: dismiss) {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(SBTheme.mutedForeground)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(SBTheme.warning.opacity(0.18))
     }
 }
 

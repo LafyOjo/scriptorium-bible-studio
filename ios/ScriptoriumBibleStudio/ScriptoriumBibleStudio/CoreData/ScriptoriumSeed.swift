@@ -18,6 +18,8 @@ enum ScriptoriumSeed {
         settings.readAloudRate = 0.48
         settings.autosaveEnabled = true
         settings.voiceIdentifier = nil
+        settings.appAppearance = "system"
+        settings.readerTheme = "parchment"
         settings.theme = "parchment"
         settings.createdAt = now
         settings.updatedAt = now

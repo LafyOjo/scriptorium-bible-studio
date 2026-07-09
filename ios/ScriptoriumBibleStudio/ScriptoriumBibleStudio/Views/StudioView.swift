@@ -49,7 +49,7 @@ struct StudioView: View {
     }
 
     private var preferredScheme: ColorScheme? {
-        switch settings?.theme {
+        switch settings?.appAppearance {
         case "dark": return .dark
         case "light": return .light
         default: return nil

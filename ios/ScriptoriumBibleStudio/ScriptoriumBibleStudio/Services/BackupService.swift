@@ -81,6 +81,8 @@ struct SettingsDTO: Codable {
     var readAloudRate: Double?
     var autosaveEnabled: Bool?
     var voiceIdentifier: String?
+    var appAppearance: String?
+    var readerTheme: String?
     var theme: String?
 }
 
@@ -94,7 +96,7 @@ enum BackupService {
         settings: SBAppSettings?
     ) -> ScriptoriumBackup {
         ScriptoriumBackup(
-            version: 3,
+            version: 4,
             collections: collections.map {
                 CollectionDTO(
                     id: $0.id,
@@ -173,6 +175,8 @@ enum BackupService {
                     readAloudRate: $0.readAloudRate,
                     autosaveEnabled: $0.autosaveEnabled,
                     voiceIdentifier: $0.voiceIdentifier,
+                    appAppearance: $0.appAppearance,
+                    readerTheme: $0.readerTheme,
                     theme: $0.theme
                 )
             }
@@ -284,7 +288,15 @@ enum BackupService {
             settings.readAloudRate = dto.readAloudRate ?? 0.48
             settings.autosaveEnabled = dto.autosaveEnabled ?? true
             settings.voiceIdentifier = dto.voiceIdentifier
-            settings.theme = dto.theme ?? "parchment"
+            settings.appAppearance = dto.appAppearance ?? {
+                switch dto.theme {
+                case "light": return "light"
+                case "dark": return "dark"
+                default: return "system"
+                }
+            }()
+            settings.readerTheme = dto.readerTheme ?? dto.theme ?? "parchment"
+            settings.theme = dto.theme ?? settings.readerTheme ?? "parchment"
             settings.createdAt = Date()
             settings.updatedAt = Date()
         } else {

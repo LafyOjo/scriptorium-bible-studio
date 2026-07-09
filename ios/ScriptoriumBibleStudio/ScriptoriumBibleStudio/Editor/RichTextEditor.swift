@@ -7,7 +7,9 @@ struct RichTextEditor: UIViewRepresentable {
 
     let context: RichTextContext
     let settings: SBAppSettings?
+    let documentID: String
     let onTextChange: (NSAttributedString) -> Void
+    let onSelectionColorChange: (UIColor?) -> Void
 
     func makeUIView(context coordinatorContext: Context) -> UITextView {
         let textView = ScriptoriumTextView()
@@ -32,6 +34,7 @@ struct RichTextEditor: UIViewRepresentable {
 
     func updateUIView(_ uiView: UITextView, context coordinatorContext: Context) {
         coordinatorContext.coordinator.onTextChange = onTextChange
+        coordinatorContext.coordinator.onSelectionColorChange = onSelectionColorChange
         coordinatorContext.coordinator.selectedText = $selectedText
         coordinatorContext.coordinator.commandContext = self.context
         coordinatorContext.coordinator.commandContext?.textView = uiView
@@ -39,7 +42,9 @@ struct RichTextEditor: UIViewRepresentable {
             textView.commandContext = self.context
         }
 
-        if !uiView.attributedText.isEqual(to: text) {
+        let documentChanged = coordinatorContext.coordinator.documentID != documentID
+        coordinatorContext.coordinator.documentID = documentID
+        if documentChanged || (!uiView.isFirstResponder && !uiView.attributedText.isEqual(to: text)) {
             let selectedRange = uiView.selectedRange
             uiView.attributedText = text
             uiView.selectedRange = clamped(selectedRange, length: uiView.attributedText.length)
@@ -69,7 +74,9 @@ struct RichTextEditor: UIViewRepresentable {
         @Binding var text: NSAttributedString
         var selectedText: Binding<String>
         var onTextChange: (NSAttributedString) -> Void
+        var onSelectionColorChange: (UIColor?) -> Void = { _ in }
         weak var commandContext: RichTextContext?
+        var documentID: String?
 
         init(
             text: Binding<NSAttributedString>,
@@ -85,24 +92,28 @@ struct RichTextEditor: UIViewRepresentable {
             self.commandContext = commandContext
             commandContext.textView = textView
             commandContext.onMutation = { [weak self] attributed in
-                self?.text = attributed
-                self?.onTextChange(attributed)
+                self?.recordChange(attributed)
             }
         }
 
         func textViewDidChange(_ textView: UITextView) {
             let updated = textView.attributedText ?? NSAttributedString()
-            text = updated
-            onTextChange(updated)
+            recordChange(updated)
         }
 
         func textViewDidChangeSelection(_ textView: UITextView) {
             let range = textView.selectedRange
             guard range.length > 0, range.location + range.length <= textView.attributedText.length else {
                 selectedText.wrappedValue = ""
+                onSelectionColorChange(textView.typingAttributes[.foregroundColor] as? UIColor)
                 return
             }
             selectedText.wrappedValue = textView.attributedText.attributedSubstring(from: range).string
+            onSelectionColorChange(textView.attributedText.attribute(.foregroundColor, at: range.location, effectiveRange: nil) as? UIColor)
+        }
+
+        private func recordChange(_ attributed: NSAttributedString) {
+            onTextChange(attributed)
         }
     }
 }
@@ -334,7 +345,25 @@ final class RichTextContext: ObservableObject {
     }
 
     func applyForegroundColor(_ color: UIColor) {
-        applyAttributes([.foregroundColor: color])
+        applyAttributes([
+            .foregroundColor: color,
+            .scriptoriumForegroundColorRole: "custom",
+        ])
+    }
+
+    func resetForegroundColor(defaultColor: UIColor = SBTheme.uiInk) {
+        guard let textView else { return }
+        let range = textView.selectedRange
+        if range.length == 0 {
+            textView.typingAttributes[.foregroundColor] = defaultColor
+            textView.typingAttributes.removeValue(forKey: .scriptoriumForegroundColorRole)
+            return
+        }
+
+        let text = mutableText()
+        text.addAttribute(.foregroundColor, value: defaultColor, range: range)
+        text.removeAttribute(.scriptoriumForegroundColorRole, range: range)
+        apply(text, selectedRange: range)
     }
 
     func insertLinkPlaceholder() {

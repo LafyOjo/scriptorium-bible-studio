@@ -152,4 +152,5 @@ struct FontOption: Identifiable, Hashable {
 
 extension NSAttributedString.Key {
     static let scriptoriumHighlightTheme = NSAttributedString.Key("ScriptoriumHighlightTheme")
+    static let scriptoriumForegroundColorRole = NSAttributedString.Key("ScriptoriumForegroundColorRole")
 }

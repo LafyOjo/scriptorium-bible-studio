@@ -11,22 +11,22 @@ struct LibraryView: View {
 
     @State private var addBookPresented = false
     @State private var searchText = ""
+    @State private var debouncedSearchText = ""
+    @State private var searchTask: Task<Void, Never>?
     @State private var expandedBookIDs: Set<String> = []
     @State private var renameTarget: LibraryRenameTarget?
     @State private var renameText = ""
 
     private var filteredBooks: [SBBook] {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let query = debouncedSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !query.isEmpty else { return books }
 
         return books.filter { book in
-            book.name.lowercased().contains(query)
-                || book.testamentValue.label.lowercased().contains(query)
-                || book.chapterArray.contains { chapter in
-                    chapter.title.lowercased().contains(query)
-                        || chapter.plainText.lowercased().contains(query)
-                        || "chapter \(chapter.number)".contains(query)
-                }
+            let chapterText = book.chapterArray
+                .map { "\($0.title) chapter \($0.number) \($0.tags) \($0.plainText)" }
+                .joined(separator: " ")
+            let searchable = "\(book.name) \(book.testamentValue.label) \(chapterText)".lowercased()
+            return searchable.contains(query)
         }
     }
 
@@ -90,6 +90,15 @@ struct LibraryView: View {
                 renameTarget = nil
                 renameText = ""
             }
+        }
+        .onAppear {
+            debouncedSearchText = searchText
+        }
+        .onChange(of: searchText) { _, value in
+            scheduleLibrarySearch(value)
+        }
+        .onDisappear {
+            searchTask?.cancel()
         }
     }
 
@@ -172,7 +181,7 @@ struct LibraryView: View {
     private func bookSection(_ book: SBBook) -> some View {
         let bookChapters = book.chapterArray
         let isExpanded = Binding(
-            get: { !searchText.isEmpty || expandedBookIDs.contains(book.id) },
+            get: { !debouncedSearchText.isEmpty || expandedBookIDs.contains(book.id) },
             set: { expanded in
                 if expanded {
                     expandedBookIDs.insert(book.id)
@@ -337,6 +346,15 @@ struct LibraryView: View {
         }
         self.renameTarget = nil
         renameText = ""
+    }
+
+    private func scheduleLibrarySearch(_ value: String) {
+        searchTask?.cancel()
+        searchTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            debouncedSearchText = value
+        }
     }
 
     private func wordCount(_ chapter: SBChapter) -> Int {

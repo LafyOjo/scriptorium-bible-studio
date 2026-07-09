@@ -126,16 +126,31 @@ struct SettingsView: View {
     }
 
     private func appearanceSection(_ settings: SBAppSettings) -> some View {
-        SettingsSection(title: "Appearance", subtitle: "Theme, reading size and manuscript typography", systemImage: "paintpalette") {
-            Picker("Theme", selection: Binding(
-                get: { SettingsTheme(rawValue: settings.theme ?? "parchment") ?? .parchment },
+        SettingsSection(title: "Appearance", subtitle: "App chrome, reader page and manuscript typography", systemImage: "paintpalette") {
+            Picker("App Appearance", selection: Binding(
+                get: { AppAppearance(rawValue: settings.appAppearance ?? "system") ?? .system },
+                set: { appearance in
+                    updateSettings { item in
+                        item.appAppearance = appearance.rawValue
+                    }
+                }
+            )) {
+                ForEach(AppAppearance.allCases) { appearance in
+                    Label(appearance.label, systemImage: appearance.systemImage).tag(appearance)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Picker("Reader Theme", selection: Binding(
+                get: { SettingsReaderTheme(rawValue: settings.readerTheme ?? settings.theme ?? "parchment") ?? .parchment },
                 set: { theme in
                     updateSettings { item in
+                        item.readerTheme = theme.rawValue
                         item.theme = theme.rawValue
                     }
                 }
             )) {
-                ForEach(SettingsTheme.allCases) { theme in
+                ForEach(SettingsReaderTheme.allCases) { theme in
                     Label(theme.label, systemImage: theme.systemImage).tag(theme)
                 }
             }
@@ -471,7 +486,31 @@ private struct SettingsMetric: View {
     }
 }
 
-private enum SettingsTheme: String, CaseIterable, Identifiable {
+private enum AppAppearance: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max"
+        case .dark: return "moon"
+        }
+    }
+}
+
+private enum SettingsReaderTheme: String, CaseIterable, Identifiable {
     case parchment
     case light
     case dark

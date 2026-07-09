@@ -175,6 +175,8 @@ final class SBAppSettings: NSManagedObject {
     @NSManaged var readAloudRate: Double
     @NSManaged var autosaveEnabled: Bool
     @NSManaged var voiceIdentifier: String?
+    @NSManaged var appAppearance: String?
+    @NSManaged var readerTheme: String?
     @NSManaged var theme: String?
     @NSManaged var createdAt: Date?
     @NSManaged var updatedAt: Date?

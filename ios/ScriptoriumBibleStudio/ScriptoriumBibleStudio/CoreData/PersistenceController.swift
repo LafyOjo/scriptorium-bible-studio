@@ -104,8 +104,18 @@ final class PersistenceController: ObservableObject {
         if settings.readAloudRate == 0 {
             settings.readAloudRate = 0.48
         }
+        if settings.appAppearance == nil {
+            switch settings.theme {
+            case "light": settings.appAppearance = "light"
+            case "dark": settings.appAppearance = "dark"
+            default: settings.appAppearance = "system"
+            }
+        }
+        if settings.readerTheme == nil {
+            settings.readerTheme = settings.theme ?? "parchment"
+        }
         if settings.theme == nil {
-            settings.theme = "parchment"
+            settings.theme = settings.readerTheme ?? "parchment"
         }
         if settings.createdAt == nil {
             settings.createdAt = now

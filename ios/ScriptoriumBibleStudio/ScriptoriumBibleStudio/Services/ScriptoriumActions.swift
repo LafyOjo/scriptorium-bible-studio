@@ -222,13 +222,16 @@ enum ScriptoriumActions {
     }
 
     static func save(_ context: NSManagedObjectContext) {
-        guard context.hasChanges else { return }
         do {
-            try context.save()
+            try saveThrowing(context)
         } catch {
-            context.rollback()
             assertionFailure("Save failed: \(error.localizedDescription)")
         }
+    }
+
+    static func saveThrowing(_ context: NSManagedObjectContext) throws {
+        guard context.hasChanges else { return }
+        try context.save()
     }
 
     private static func nextCollectionOrder(context: NSManagedObjectContext) -> Int64 {

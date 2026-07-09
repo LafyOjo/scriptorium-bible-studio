@@ -72,6 +72,8 @@ enum ScriptoriumModel {
             attribute("readAloudRate", .doubleAttributeType, defaultValue: 0.48),
             attribute("autosaveEnabled", .booleanAttributeType, defaultValue: true),
             attribute("voiceIdentifier", .stringAttributeType, optional: true),
+            attribute("appAppearance", .stringAttributeType, optional: true),
+            attribute("readerTheme", .stringAttributeType, optional: true),
             attribute("theme", .stringAttributeType, optional: true),
             attribute("createdAt", .dateAttributeType, optional: true),
             attribute("updatedAt", .dateAttributeType, optional: true),

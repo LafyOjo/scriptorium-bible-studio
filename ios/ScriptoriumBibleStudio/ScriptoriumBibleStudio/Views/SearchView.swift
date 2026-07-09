@@ -7,24 +7,30 @@ struct SearchView: View {
     let openChapter: (SBChapter) -> Void
 
     @State private var query = ""
+    @State private var debouncedQuery = ""
     @State private var selectedTheme: HighlightTheme?
+    @State private var results: [SearchResult] = []
+    @State private var searchTask: Task<Void, Never>?
 
-    private var results: [SearchResult] {
+    private func makeResults(query: String, theme: HighlightTheme?) -> [SearchResult] {
         let cleanQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let bookmarksByChapter = Dictionary(grouping: bookmarks) { bookmark in
+            bookmark.chapter?.objectID.uriRepresentation().absoluteString ?? bookmark.chapterID ?? ""
+        }
 
         return chapters.compactMap { chapter in
             let book = chapter.book ?? books.first { book in
                 book.chapterArray.contains { $0.objectID == chapter.objectID }
             }
             let bookName = book?.name ?? ""
+            let chapterKey = chapter.objectID.uriRepresentation().absoluteString
             let text = chapter.plainText
+            let lowerText = text.lowercased()
             let notes = chapter.noteArray
-            let chapterBookmarks = bookmarks.filter { bookmark in
-                bookmark.chapter?.objectID == chapter.objectID || bookmark.chapterID == chapter.id
-            }
+            let chapterBookmarks = (bookmarksByChapter[chapterKey] ?? []) + (bookmarksByChapter[chapter.id] ?? [])
 
             let matchesQuery = cleanQuery.isEmpty
-                || text.lowercased().contains(cleanQuery)
+                || lowerText.contains(cleanQuery)
                 || bookName.lowercased().contains(cleanQuery)
                 || "\(bookName) \(chapter.number)".lowercased().contains(cleanQuery)
                 || "chapter \(chapter.number)".contains(cleanQuery)
@@ -34,9 +40,9 @@ struct SearchView: View {
                 || chapterBookmarks.contains { bookmarkMatches($0, query: cleanQuery) }
 
             let matchesTheme: Bool
-            if let selectedTheme {
-                matchesTheme = chapter.themeArray.contains(selectedTheme)
-                    || notes.contains { $0.themeValue == selectedTheme }
+            if let theme {
+                matchesTheme = chapter.themeArray.contains(theme)
+                    || notes.contains { $0.themeValue == theme }
             } else {
                 matchesTheme = true
             }
@@ -51,6 +57,7 @@ struct SearchView: View {
             )
 
             return SearchResult(
+                id: chapterKey,
                 chapter: chapter,
                 bookName: bookName.isEmpty ? "Book" : bookName,
                 excerpt: match.excerpt,
@@ -85,6 +92,13 @@ struct SearchView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 28)
         }
+        .onAppear { scheduleSearch(immediate: true) }
+        .onChange(of: query) { _, _ in scheduleSearch() }
+        .onChange(of: selectedTheme) { _, _ in scheduleSearch() }
+        .onChange(of: chapters.map(\.updatedAt)) { _, _ in scheduleSearch(immediate: true) }
+        .onDisappear {
+            searchTask?.cancel()
+        }
     }
 
     private func searchResultCard(_ result: SearchResult) -> some View {
@@ -113,7 +127,7 @@ struct SearchView: View {
                         .tracking(1.8)
                         .foregroundStyle(SBTheme.gold)
 
-                    HighlightedExcerpt(text: result.excerpt, query: query)
+                    HighlightedExcerpt(text: result.excerpt, query: debouncedQuery)
                         .lineLimit(4)
 
                     if !result.chapter.tagArray.isEmpty {
@@ -238,10 +252,24 @@ struct SearchView: View {
 
         return SearchMatchContext(source: "Manuscript", excerpt: String(chapterText.prefix(180)))
     }
+
+    private func scheduleSearch(immediate: Bool = false) {
+        searchTask?.cancel()
+        let pendingQuery = query
+        let pendingTheme = selectedTheme
+        searchTask = Task { @MainActor in
+            if !immediate {
+                try? await Task.sleep(for: .milliseconds(350))
+            }
+            guard !Task.isCancelled else { return }
+            debouncedQuery = pendingQuery
+            results = makeResults(query: pendingQuery, theme: pendingTheme)
+        }
+    }
 }
 
 private struct SearchResult: Identifiable {
-    let id = UUID()
+    let id: String
     let chapter: SBChapter
     let bookName: String
     let excerpt: String

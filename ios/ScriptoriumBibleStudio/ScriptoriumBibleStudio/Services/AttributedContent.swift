@@ -108,6 +108,22 @@ enum AttributedContent {
         )
     }
 
+    static func shouldPreserveForegroundColor(_ color: UIColor?, role: Any?) -> Bool {
+        guard let color else { return false }
+        if (role as? String) == "custom" {
+            return true
+        }
+        if color.isClose(to: SBTheme.uiGold) || color.isClose(to: SBTheme.uiCrimson) {
+            return true
+        }
+        return !color.isClose(to: SBTheme.uiInk) && !color.isClose(to: SBTheme.uiMutedForeground)
+    }
+
+    static func readerColor(_ color: UIColor, onDarkBackground: Bool) -> UIColor {
+        guard onDarkBackground, color.relativeLuminance < 0.28 else { return color }
+        return color.mixed(with: .white, amount: 0.58)
+    }
+
     static func displayFont(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
         SBTheme.displayUIFont(size: size, weight: weight)
     }
@@ -144,5 +160,45 @@ private extension UIFont {
             return self
         }
         return UIFont(descriptor: descriptor, size: pointSize)
+    }
+}
+
+private extension UIColor {
+    func isClose(to other: UIColor, tolerance: CGFloat = 0.035) -> Bool {
+        let left = rgba
+        let right = other.rgba
+        return abs(left.red - right.red) <= tolerance
+            && abs(left.green - right.green) <= tolerance
+            && abs(left.blue - right.blue) <= tolerance
+            && abs(left.alpha - right.alpha) <= tolerance
+    }
+
+    var relativeLuminance: CGFloat {
+        let color = rgba
+        func component(_ value: CGFloat) -> CGFloat {
+            value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * component(color.red) + 0.7152 * component(color.green) + 0.0722 * component(color.blue)
+    }
+
+    func mixed(with other: UIColor, amount: CGFloat) -> UIColor {
+        let left = rgba
+        let right = other.rgba
+        let clamped = min(max(amount, 0), 1)
+        return UIColor(
+            red: left.red + (right.red - left.red) * clamped,
+            green: left.green + (right.green - left.green) * clamped,
+            blue: left.blue + (right.blue - left.blue) * clamped,
+            alpha: left.alpha + (right.alpha - left.alpha) * clamped
+        )
+    }
+
+    var rgba: (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return (red, green, blue, alpha)
     }
 }
